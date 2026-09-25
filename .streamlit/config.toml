@@ -1,0 +1,12 @@
+[theme]
+primaryColor        = "#1D4ED8"   # Biru tua — kepercayaan, teknologi
+backgroundColor     = "#FFFFFF"
+secondaryBackgroundColor = "#F1F5F9"  # Abu biru sangat muda
+textColor           = "#0F172A"   # Near-black, bukan hitam keras
+font                = "sans serif"
+
+[server]
+runOnSave = true
+
+[browser]
+gatherUsageStats = false

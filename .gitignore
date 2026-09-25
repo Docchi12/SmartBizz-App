@@ -1,0 +1,22 @@
+# Virtual environment — jangan push ke Git
+.venv/
+venv/
+env/
+
+# Streamlit cache
+.streamlit/secrets.toml
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

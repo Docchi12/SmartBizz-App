@@ -36,12 +36,19 @@ def check_login(email: str, password: str) -> bool:
     Validasi credential login.
 
     # TODO: BACKEND - ganti dengan autentikasi ke database/API asli
-    Saat ini hanya mengecek terhadap DUMMY_USERS hardcode.
+    Cek DUMMY_USERS (akun hardcode) + _temp_users (akun yang didaftarkan
+    via Register dalam sesi ini, disimpan di session_state).
 
     Returns:
         True jika credential valid, False jika tidak.
     """
-    return DUMMY_USERS.get(email.strip().lower()) == password
+    email = email.strip().lower()
+    # Cek akun hardcode
+    if DUMMY_USERS.get(email) == password:
+        return True
+    # Cek akun yang baru didaftarkan dalam sesi ini
+    temp_users = st.session_state.get("_temp_users", {})
+    return temp_users.get(email) == password
 
 
 def get_user_profile(email: str) -> dict:
@@ -49,11 +56,16 @@ def get_user_profile(email: str) -> dict:
     Ambil profil user berdasarkan email.
 
     # TODO: BACKEND - ganti dengan query profil dari database asli
+    Cek DUMMY_PROFILES dulu, lalu _temp_profiles (profil dari Register).
 
     Returns:
         dict profil user, atau dict kosong kalau tidak ditemukan.
     """
-    return DUMMY_PROFILES.get(email.strip().lower(), {})
+    email = email.strip().lower()
+    if email in DUMMY_PROFILES:
+        return DUMMY_PROFILES[email]
+    temp_profiles = st.session_state.get("_temp_profiles", {})
+    return temp_profiles.get(email, {})
 
 
 def init_session():
@@ -79,6 +91,44 @@ def login_user(email: str, password: str) -> bool:
         st.session_state.user_profile = get_user_profile(email)
         return True
     return False
+
+
+def register_user(
+    name: str,
+    business: str,
+    email: str,
+    password: str,
+) -> tuple[bool, str]:
+    """
+    Daftarkan user baru ke penyimpanan sementara (session_state).
+
+    # TODO: BACKEND - ganti dengan insert ke database asli & hashing password
+    Saat ini data hanya bertahan selama sesi browser aktif.
+
+    Returns:
+        (True, "") jika berhasil.
+        (False, "pesan error") jika gagal validasi.
+    """
+    email = email.strip().lower()
+
+    # Init penyimpanan sementara jika belum ada
+    if "_temp_users" not in st.session_state:
+        st.session_state._temp_users = {}
+    if "_temp_profiles" not in st.session_state:
+        st.session_state._temp_profiles = {}
+
+    # Cek duplikat email di DUMMY_USERS & akun yang sudah didaftarkan
+    if email in DUMMY_USERS or email in st.session_state._temp_users:
+        return False, "Email sudah terdaftar."
+
+    # Simpan credential & profil ke session_state
+    st.session_state._temp_users[email] = password
+    st.session_state._temp_profiles[email] = {
+        "name": name.strip(),
+        "business": business.strip(),
+        "role": "Owner",
+    }
+    return True, ""
 
 
 def logout_user():

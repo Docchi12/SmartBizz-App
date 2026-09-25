@@ -10,18 +10,7 @@
 
 import streamlit as st
 from utils.auth import init_session, login_user, register_user
-from utils.styles import apply_global_css
 
-# ── Konfigurasi halaman ───────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="Login — SmartBizz AI",
-    page_icon="assets/logo.png",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-
-# ── CSS global (sidebar navy, tipografi, card) ───────────────────────────
-apply_global_css()
 
 # ── CSS lokal ─────────────────────────────────────────────────────────────────
 # Token: Primary #1D4ED8 | Surface #F1F5F9 | Text #0F172A | Border #E2E8F0
@@ -211,10 +200,10 @@ init_session()
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
 
-# Redirect jika sudah login
+# Dengan st.navigation(), rerun menyebabkan app.py rebuild pages list berdasarkan
+# logged_in=True → st.navigation() otomatis navigasi ke halaman pertama (Dashboard)
 if st.session_state.logged_in:
-    # TODO: ganti ke st.switch_page("pages/2_Dashboard.py") setelah Dashboard dibuat
-    st.switch_page("app.py")
+    st.rerun()
 
 # ── Brand header ──────────────────────────────────────────────────────────────
 st.markdown(

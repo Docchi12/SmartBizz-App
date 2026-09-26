@@ -15,59 +15,65 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 
+# ── Pengecekan Data (Empty State) ─────────────────────────────────────────────
+df_sales_raw = st.session_state.get("uploaded_sales_data")
+if df_sales_raw is None or len(df_sales_raw) == 0:
+    st.info("Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management.")
+    if st.button("Ke Halaman Data Management", type="primary", key="dash_to_dm"):
+        st.switch_page(st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:"))
+    st.stop()
+
+# Siapkan data agregasi harian secara global untuk dashboard
+df_sales = df_sales_raw.copy()
+df_sales['tanggal'] = pd.to_datetime(df_sales['tanggal'])
+df_daily_all = df_sales.groupby('tanggal')['jumlah_terjual'].sum().reset_index()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DATA FUNCTIONS — ganti implementasi dummy dengan yang asli saat backend siap
 # ══════════════════════════════════════════════════════════════════════════════
 
 def get_summary_data() -> dict:
-    # TODO: BACKEND - ganti dengan query ke database asli dari tim Software Engineer
+    # TODO: BE - Ganti dengan query summary ke database asli
+    total_produk = df_sales['nama_produk'].nunique()
+    
+    # Dummy logic untuk forecast hari ini: rata-rata harian dari 7 hari terakhir
+    recent_daily = df_daily_all.tail(7)['jumlah_terjual'].mean()
+    forecast_hari = int(recent_daily) if not pd.isna(recent_daily) else 0
+    
+    # Dummy logic untuk restock count: statis 3 atau persentase produk
+    restock_count = min(3, total_produk)
+    
+    # Dummy logic untuk risk status
+    risk_status = "Aman"
+    if recent_daily < 50:
+        risk_status = "Perhatian"
+        
     return {
-        "total_produk":   24,
-        "forecast_hari":  156,
-        "restock_count":  3,
-        "risk_status":    "Aman",     # "Aman" | "Perhatian" | "Kritis"
+        "total_produk":   total_produk,
+        "forecast_hari":  forecast_hari,
+        "restock_count":  restock_count,
+        "risk_status":    risk_status,
     }
 
 
 def get_sales_trend_data() -> pd.DataFrame:
-    # TODO: BACKEND - ganti dengan query penjualan aktual dari tim Software Engineer
-    # Data dummy statis — JANGAN pakai random() agar tampilan konsisten di setiap demo
-    values = [
-        142, 155, 138, 162, 170, 148, 153,
-        160, 175, 168, 182, 190, 178, 165,
-        158, 171, 185, 192, 177, 163,
-        169, 181, 195, 188, 172, 166,
-        174, 183, 191, 178,
-    ]
-    base = datetime(2024, 9, 26) - timedelta(days=30)
-    dates = [base + timedelta(days=i) for i in range(30)]
-    return pd.DataFrame({"tanggal": dates, "penjualan": values})
+    # Filter 30 hari terakhir
+    max_date = df_daily_all['tanggal'].max()
+    min_date = max_date - pd.Timedelta(days=30)
+    df_trend = df_daily_all[df_daily_all['tanggal'] > min_date].copy()
+    df_trend.rename(columns={'jumlah_terjual': 'penjualan'}, inplace=True)
+    return df_trend
 
 
 def get_actual_vs_forecast_data() -> pd.DataFrame:
-    # TODO: BACKEND - ganti dengan query aktual + output forecast engine dari tim Software Engineer
-    actual_values = [
-        142, 155, 138, 162, 170, 148, 153,
-        160, 175, 168, 182, 190, 178, 165,
-        158, 171, 185, 192, 177, 163,
-        169, 181, 195, 188, 172, 166,
-        174, 183, 191, 178,
-    ]
-    forecast_values = [
-        145, 150, 142, 158, 167, 152, 155,
-        163, 172, 170, 179, 186, 181, 168,
-        161, 169, 183, 189, 180, 165,
-        172, 178, 192, 185, 175, 170,
-        176, 180, 188, 182,
-    ]
-    base = datetime(2024, 9, 26) - timedelta(days=30)
-    dates = [base + timedelta(days=i) for i in range(30)]
-    return pd.DataFrame({
-        "tanggal":  dates,
-        "aktual":   actual_values,
-        "forecast": forecast_values,
-    })
+    # TODO: BE - Ganti dengan query aktual + output forecast engine asli
+    df_trend = get_sales_trend_data()
+    df_trend.rename(columns={'penjualan': 'aktual'}, inplace=True)
+    
+    from utils.forecasting import generate_dummy_historical_forecast
+    df_avf = generate_dummy_historical_forecast(df_trend)
+    return df_avf
+
 
 
 # ── Helper: format tanggal Indonesia ─────────────────────────────────────────
@@ -205,15 +211,16 @@ fig_sales.update_layout(
 
 st.plotly_chart(fig_sales, use_container_width=True)
 
-# TODO: BACKEND - ganti dengan insight otomatis yang di-generate dari analisis data asli
-def get_sales_insight() -> str:
-    return (
-        "Penjualan Anda cukup stabil di atas 150 unit per hari selama sebulan terakhir."
-    )
+# TODO: BE - Ganti dengan insight otomatis berdasarkan kemiringan tren asli
+def get_sales_insight(df_trend: pd.DataFrame) -> str:
+    if df_trend.empty:
+        return "Belum ada data yang cukup untuk memberikan insight penjualan."
+    avg_sales = int(df_trend['penjualan'].mean())
+    return f"Penjualan Anda berada di rata-rata {avg_sales} unit per hari selama periode ini."
 
 st.markdown(
     f"<p style='font-size:0.82rem; color:#64748B; margin-top:-0.25rem;'>"
-    f"{get_sales_insight()}"
+    f"{get_sales_insight(df_sales)}"
     f"</p>",
     unsafe_allow_html=True,
 )
@@ -276,18 +283,23 @@ fig_avf.update_layout(
 
 st.plotly_chart(fig_avf, use_container_width=True)
 
-# TODO: BACKEND - ganti dengan insight otomatis yang di-generate dari analisis data asli
-# (misal: deteksi tren naik/turun, selisih forecast vs aktual, pola hari tertentu)
-def get_avf_insight() -> str:
+# TODO: BE - Ganti dengan insight otomatis yang di-generate dari analisis data asli
+def get_avf_insight(df_avf: pd.DataFrame) -> str:
+    if df_avf.empty:
+        return "Belum ada data aktual/forecast yang cukup untuk diperbandingkan."
+    
+    # Dummy logic: Hitung selisih absolut rata-rata
+    diffs = abs(df_avf['aktual'] - df_avf['forecast'])
+    avg_err = (diffs.mean() / df_avf['aktual'].mean() * 100) if df_avf['aktual'].mean() > 0 else 0
+    
     return (
-        "Penjualan Anda cenderung meningkat menjelang akhir pekan. "
-        "Perkiraan kami cukup dekat dengan penjualan nyata — artinya bahan baku yang disiapkan "
-        "sesuai prediksi biasanya tidak akan berlebih atau kurang."
+        f"Perkiraan kami cukup dekat dengan penjualan nyata (rata-rata deviasi ~{avg_err:.1f}%) "
+        f"— artinya persiapan stok Anda sudah berada di jalur yang benar."
     )
 
 st.markdown(
     f"<p style='font-size:0.82rem; color:#64748B; margin-top:-0.25rem;'>"
-    f"{get_avf_insight()}"
+    f"{get_avf_insight(df_avf)}"
     f"</p>",
     unsafe_allow_html=True,
 )

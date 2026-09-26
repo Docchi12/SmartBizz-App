@@ -46,3 +46,15 @@ def render_sidebar() -> None:
                 "Silakan login untuk mengakses fitur.</span>",
                 unsafe_allow_html=True,
             )
+
+def render_table_interactive_tip() -> None:
+    """
+    Menampilkan tip/affordance di atas st.dataframe untuk memberi tahu
+    user bahwa header kolom bisa di-klik untuk fitur interaktif (sort/stats).
+    """
+    st.markdown(
+        "<p style='font-size:0.8rem; color:#1D4ED8; font-weight:500; margin-top:-0.5rem; margin-bottom:0.75rem;'>"
+        "💡 Tip: Klik ikon pada judul kolom untuk mengurutkan atau melihat statistik data."
+        "</p>",
+        unsafe_allow_html=True
+    )

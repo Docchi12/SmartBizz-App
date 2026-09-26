@@ -129,16 +129,13 @@ with st.container(border=True):
             f"Menampilkan {min(10, len(df))} dari total {len(df)} baris data.</p>",
             unsafe_allow_html=True
         )
-        # Tip interaktif untuk user mobile
-        st.markdown(
-            "<p style='font-size:0.8rem; color:#1D4ED8; font-weight:500; margin-top:-0.5rem; margin-bottom:0.75rem;'>"
-            "💡 Tip: Klik ikon pada judul kolom untuk mengurutkan atau melihat statistik data."
-            "</p>",
-            unsafe_allow_html=True
-        )
-
         # Rename hanya untuk tampilan — data asli di session_state tetap snake_case
         df_display = df.head(10).rename(columns=_COLUMN_LABELS)
+        
+        # Tip interaktif untuk user mobile
+        from utils.layout import render_table_interactive_tip
+        render_table_interactive_tip()
+        
         st.dataframe(df_display, use_container_width=True, hide_index=True)
 
         st.markdown("<div style='height:0.75rem;'></div>", unsafe_allow_html=True)

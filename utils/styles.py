@@ -142,6 +142,27 @@ hr { border-color: #E2E8F0; margin: 1rem 0; }
 
 /* ── Alert ── */
 .stAlert { border-radius: 8px; }
+
+/* ── Metric: perkecil font agar proporsional dengan elemen lain ──
+   Selector dikonfirmasi dari source Streamlit 1.64 (Metric.B02FwwbX.js):
+   testid yang valid: stMetric, stMetricLabel, stMetricValue, stMetricDelta
+   Di-apply global tanpa .main (karena st.metric saat ini hanya ada di Data Management).
+   Targeting inner div juga ditambahkan agar specificity menang melawan emotion-cache Streamlit.
+*/
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] * {
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    color: #1D4ED8 !important;
+    line-height: 1.2 !important;
+}
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] > div, [data-testid="stMetricLabel"] * {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    color: #64748B !important;
+}
+[data-testid="stMetricDelta"] { display: none !important; }
 </style>
 """
 

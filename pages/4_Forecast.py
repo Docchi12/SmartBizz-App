@@ -67,29 +67,18 @@ horizon_days = int(horizon_label.split()[0])
 # Filter data aktual untuk produk terpilih
 df_prod = df_agg[df_agg['nama_produk'] == selected_product].sort_values('tanggal')
 
-# TODO: BE - Ganti logic dummy di bawah ini dengan model forecasting asli (Prophet/ARIMA/dll)
-# Mulai Logic Dummy Prediksi: Rata-rata bergerak dari 7 data terakhir + variasi acak
 if not df_prod.empty:
+    from utils.forecasting import generate_dummy_forecast
+    
+    # Generate prediksi menggunakan shared logic
+    df_pred = generate_dummy_forecast(df_prod, horizon_days)
+    dummy_values = df_pred['prediksi'].tolist()
+    
     last_date = df_prod['tanggal'].max()
     recent_sales = df_prod['jumlah_terjual'].tail(7).mean()
     if pd.isna(recent_sales):
         recent_sales = 0
-    
-    dummy_dates = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=horizon_days)
-    dummy_values = []
-    
-    current_val = recent_sales
-    for _ in range(horizon_days):
-        # Variasi acak ±10% dari nilai sebelumnya untuk efek tren ringan
-        variasi = current_val * random.uniform(-0.1, 0.1)
-        current_val = max(0, current_val + variasi) # Tidak boleh negatif
-        dummy_values.append(int(current_val))
-    
-    df_pred = pd.DataFrame({
-        'tanggal': dummy_dates,
-        'prediksi': dummy_values
-    })
-    
+        
     # ── 2. GRAFIK AKTUAL VS PREDIKSI ──────────────────────────────────────────
     st.markdown(f"<h4>Perkiraan Penjualan: {selected_product}</h4>", unsafe_allow_html=True)
     

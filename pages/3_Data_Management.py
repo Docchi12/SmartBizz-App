@@ -16,6 +16,13 @@ if not st.session_state.get("logged_in", False):
 if "uploaded_sales_data" not in st.session_state:
     st.session_state["uploaded_sales_data"] = None
 
+if "product_prices" not in st.session_state:
+    st.session_state["product_prices"] = {}
+
+if "monthly_operational_cost" not in st.session_state:
+    st.session_state["monthly_operational_cost"] = 0
+
+
 # ── Header Halaman ────────────────────────────────────────────────────────────
 st.markdown(
     "<h2 style='margin-bottom:0.5rem;'>Data Management</h2>"
@@ -111,6 +118,15 @@ with st.container(border=True):
 
         # TODO: BACKEND - ganti dengan validasi lebih lengkap dan penyimpanan permanen ke database asli
         st.success("Data berhasil dibaca. Dataset siap digunakan untuk perkiraan penjualan.")
+        
+        # Tampilkan peringatan jika ada jumlah terjual negatif
+        if (df['jumlah_terjual'] < 0).any():
+            neg_count = (df['jumlah_terjual'] < 0).sum()
+            contoh_produk = df[df['jumlah_terjual'] < 0]['nama_produk'].iloc[0]
+            st.warning(
+                f"Terdapat {neg_count} baris dengan jumlah terjual negatif (kemungkinan retur/pengembalian barang). "
+                f"Contoh: produk '{contoh_produk}'. Sistem akan tetap memprosesnya sesuai maksud Anda."
+            )
 
         # ── Ringkasan Data (Summary Metrics) ──────────────────────────────
         jumlah_produk_unik = df["nama_produk"].nunique()
@@ -119,6 +135,149 @@ with st.container(border=True):
         m1.metric("Total Baris Data", f"{len(df):,} baris")
         m2.metric("Rentang Tanggal", rentang_tanggal)
         m3.metric("Jumlah Produk Unik", f"{jumlah_produk_unik} produk")
+
+        st.markdown("<div style='height:0.75rem;'></div>", unsafe_allow_html=True)
+        
+        # ── Harga Produk ──────────────────────────────────────────────────────────
+        st.markdown("<h5>Harga Produk</h5>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='font-size:0.85rem; color:#64748B; margin-top:-0.5rem;'>"
+            "Masukkan harga jual (dan modal jika ada) untuk mengaktifkan estimasi keuntungan di Dashboard.</p>",
+            unsafe_allow_html=True
+        )
+        
+        unique_products = sorted(df["nama_produk"].unique())
+        prices_dict = st.session_state["product_prices"]
+        
+        # TUGAS 1: Pindahkan indikator status ke atas (Data Management)
+        filled_count = sum(1 for p in unique_products if prices_dict.get(p, {}).get("harga_jual", 0) > 0)
+        st.markdown(
+            f"<p style='font-size:0.75rem; color:#64748B; margin-top:-0.5rem; margin-bottom:1rem;'>"
+            f"<i>{filled_count} dari {len(unique_products)} produk sudah memiliki harga jual.</i></p>",
+            unsafe_allow_html=True
+        )
+        
+        # TUGAS 2: Tampilkan pesan sukses dari submission sebelumnya (jika ada)
+        if st.session_state.get("_price_success", False):
+            st.success("Harga produk berhasil disimpan.")
+            st.session_state["_price_success"] = False
+        
+        # Inisialisasi state sementara untuk data editor agar edit tidak hilang saat filter berubah
+        if "working_prices" not in st.session_state or st.session_state.get("_reset_working_prices", False):
+            st.session_state["working_prices"] = {
+                p: {
+                    "harga_jual": prices_dict.get(p, {}).get("harga_jual", 0),
+                    "harga_modal": prices_dict.get(p, {}).get("harga_modal", 0)
+                } for p in unique_products
+            }
+            st.session_state["_reset_working_prices"] = False
+            
+        search_query = st.text_input("🔍 Cari produk...", key="search_produk").lower()
+        
+        # Buat list data dari working_prices
+        prices_list = []
+        for p in unique_products:
+            prices_list.append({
+                "Nama Produk": p,
+                "Harga Jual (Rp)": st.session_state["working_prices"][p]["harga_jual"],
+                "Harga Modal (Rp)": st.session_state["working_prices"][p]["harga_modal"]
+            })
+            
+        df_prices = pd.DataFrame(prices_list)
+        
+        if search_query:
+            df_prices_display = df_prices[df_prices["Nama Produk"].str.lower().str.contains(search_query)]
+            st.markdown(
+                f"<p style='font-size:0.75rem; color:#64748B; margin-top:-0.5rem; margin-bottom:0.5rem;'>"
+                f"Menampilkan {len(df_prices_display)} dari {len(df_prices)} produk</p>",
+                unsafe_allow_html=True
+            )
+        else:
+            df_prices_display = df_prices
+            
+        if df_prices_display.empty:
+            st.info(f"Tidak ada produk yang cocok dengan pencarian '{search_query}'.")
+        else:
+            # Hitung tinggi proporsional (asumsi header 40px + baris 35px)
+            # Batas minimum 150px agar tidak terlalu gepeng, maksimum 400px
+            calculated_height = 40 + (len(df_prices_display) * 35)
+            table_height = min(400, max(150, calculated_height + 10))
+            
+            edited_df = st.data_editor(
+                df_prices_display,
+                column_config={
+                    "Nama Produk": st.column_config.TextColumn(disabled=True),
+                    "Harga Jual (Rp)": st.column_config.NumberColumn(min_value=0, step=1000),
+                    "Harga Modal (Rp)": st.column_config.NumberColumn(min_value=0, step=1000)
+                },
+                hide_index=True,
+                use_container_width=True,
+                height=table_height,
+                num_rows="fixed",
+                key="price_data_editor"
+            )
+            
+            # Ambil perubahan dari editor dan simpan langsung ke working_prices
+            for _, row in edited_df.iterrows():
+                p = row["Nama Produk"]
+                st.session_state["working_prices"][p]["harga_jual"] = int(row["Harga Jual (Rp)"])
+                st.session_state["working_prices"][p]["harga_modal"] = int(row["Harga Modal (Rp)"])
+            
+        if st.button("Simpan Harga Produk", type="primary"):
+            # TODO: BE - session_state ini perlu dipindahkan ke penyimpanan permanen (database)
+            new_prices = {}
+            for p in unique_products:
+                new_prices[p] = {
+                    "harga_jual": st.session_state["working_prices"][p]["harga_jual"],
+                    "harga_modal": st.session_state["working_prices"][p]["harga_modal"]
+                }
+                
+            st.session_state["product_prices"] = new_prices
+            
+            ada_hj_nol = False
+            ada_hm_lebih_besar = False
+            for p, val in new_prices.items():
+                if val["harga_jual"] == 0:
+                    ada_hj_nol = True
+                if val["harga_modal"] > val["harga_jual"]:
+                    ada_hm_lebih_besar = True
+                    st.warning(f"Harga modal **{p}** lebih tinggi dari harga jual — periksa kembali apakah ini sudah benar.")
+                    
+            if ada_hj_nol:
+                st.warning("Beberapa produk belum diisi harga jualnya — estimasi keuntungan belum bisa dihitung untuk produk tersebut.")
+            
+            if not ada_hj_nol and not ada_hm_lebih_besar:
+                st.session_state["_price_success"] = True
+                st.rerun()
+
+        st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+        
+        # ── Biaya Operasional ─────────────────────────────────────────────────────
+        st.markdown("<h5>Biaya Operasional (Opsional)</h5>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='font-size:0.85rem; color:#64748B; margin-top:-0.5rem; margin-bottom:1rem;'>"
+            "Jika usaha Anda punya biaya rutin seperti sewa tempat, gaji karyawan, atau listrik, masukkan total perkiraan biaya per bulan di sini untuk melihat estimasi keuntungan bersih yang lebih akurat. Kosongkan/isi 0 jika tidak ada (misalnya usaha rumahan atau kaki lima tanpa biaya sewa/karyawan).</p>",
+            unsafe_allow_html=True
+        )
+        
+        if st.session_state.get("_op_success", False):
+            st.success("Biaya operasional berhasil disimpan.")
+            st.session_state["_op_success"] = False
+            
+        with st.form("form_operational_cost"):
+            op_val = st.number_input(
+                "Total Biaya Operasional per Bulan (Rp)",
+                min_value=0,
+                value=int(st.session_state.get("monthly_operational_cost", 0)),
+                step=50000
+            )
+            
+            submit_op = st.form_submit_button("Simpan Biaya Operasional", type="primary")
+            if submit_op:
+                # TODO: BE - pindahkan session_state ini ke penyimpanan permanen (database)
+                st.session_state["monthly_operational_cost"] = op_val
+                st.session_state["_op_success"] = True
+                st.rerun()
 
         st.markdown("<div style='height:0.75rem;'></div>", unsafe_allow_html=True)
 
@@ -130,7 +289,9 @@ with st.container(border=True):
             unsafe_allow_html=True
         )
         # Rename hanya untuk tampilan — data asli di session_state tetap snake_case
-        df_display = df.head(10).rename(columns=_COLUMN_LABELS)
+        df_display = df.head(10).copy()
+        df_display['tanggal'] = df_display['tanggal'].dt.strftime('%Y-%m-%d')
+        df_display = df_display.rename(columns=_COLUMN_LABELS)
         
         # Tip interaktif untuk user mobile
         from utils.layout import render_table_interactive_tip
@@ -141,6 +302,7 @@ with st.container(border=True):
         st.markdown("<div style='height:0.75rem;'></div>", unsafe_allow_html=True)
         if st.button("Hapus & Upload Ulang", key="btn_reset_upload"):
             st.session_state["uploaded_sales_data"] = None
+            st.session_state["_reset_working_prices"] = True
             st.rerun()
             
     else:
@@ -188,15 +350,59 @@ with st.container(border=True):
                         f"(kapitalisasi dan spasi tidak masalah, cukup kata kuncinya ada)."
                     )
                 else:
-                    # Cek tipe data kolom jumlah_terjual (harus angka/numerik)
-                    if not pd.api.types.is_numeric_dtype(df["jumlah_terjual"]):
-                        st.error(
-                            "Kolom 'jumlah_terjual' berisi nilai yang bukan angka. "
-                            "Pastikan kolom ini hanya berisi angka bulat (contoh: 10, 50, 100), "
-                            "bukan teks seperti '10 pcs' atau '10,5'."
+                    # PARSING & CLEANUP SEBELUM SIMPAN
+                    
+                    # 1. TANGGAL
+                    df_raw_date = df['tanggal'].copy()
+                    df['tanggal'] = pd.to_datetime(df['tanggal'], format='mixed', dayfirst=True, errors='coerce')
+                    
+                    # 2. JUMLAH TERJUAL
+                    df_raw_jumlah = df['jumlah_terjual'].copy()
+                    df['jumlah_terjual'] = pd.to_numeric(df['jumlah_terjual'], errors='coerce')
+                    
+                    # 3. NAMA PRODUK
+                    df['nama_produk'] = df['nama_produk'].astype(str).str.strip().str.replace(r'\s+', ' ', regex=True)
+                    
+                    # Validasi Baris Bermasalah
+                    bad_dates = df['tanggal'].isna()
+                    bad_jumlah = df['jumlah_terjual'].isna()
+                    bad_produk = df['nama_produk'].isin(['', 'nan', 'None'])
+                    
+                    is_bad_row = bad_dates | bad_jumlah | bad_produk
+                    
+                    if is_bad_row.any():
+                        bad_indices = df[is_bad_row].index
+                        
+                        st.error("Terdapat baris data yang formatnya tidak dikenali. Mohon perbaiki file Excel/CSV Anda dan upload ulang.")
+                        
+                        st.markdown("**Detail baris yang perlu diperbaiki:**")
+                        for idx in bad_indices[:5]:
+                            err_msgs = []
+                            if bad_dates[idx]:
+                                err_msgs.append(f"Format tanggal tidak dikenali ('{df_raw_date.iloc[idx]}')")
+                            if bad_jumlah[idx]:
+                                err_msgs.append(f"Jumlah terjual bukan angka murni ('{df_raw_jumlah.iloc[idx]}')")
+                            if bad_produk[idx]:
+                                err_msgs.append("Nama produk kosong")
+                                
+                            # +2 karena index 0 = baris ke-2 di Excel (setelah header)
+                            st.markdown(f"- **Baris {idx + 2}**: {', '.join(err_msgs)}")
+                            
+                        if len(bad_indices) > 5:
+                            st.markdown(f"*...dan {len(bad_indices) - 5} baris lainnya bermasalah.*")
+                            
+                        st.info(
+                            "💡 **Mengapa data ini ditolak dan tidak diabaikan (skip) saja?**\n\n"
+                            "Kami ingin memastikan akurasi data Anda. Jika baris yang salah kami abaikan begitu saja, "
+                            "perhitungan omset dan prediksi penjualan Anda bisa meleset dan merugikan bisnis. "
+                            "Lebih aman diperbaiki sebentar sebelum dilanjutkan."
                         )
+                        st.stop()
                     else:
+                        # TODO: BE - Validasi lebih ketat di level backend/database saat menyimpan permanen
+                        df['jumlah_terjual'] = df['jumlah_terjual'].astype(int)
                         st.session_state["uploaded_sales_data"] = df
+                        st.session_state["_reset_working_prices"] = True
                         st.rerun()
 
             except pd.errors.EmptyDataError:

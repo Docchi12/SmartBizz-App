@@ -56,6 +56,56 @@ def get_summary_data() -> dict:
     }
 
 
+def get_pricing_summary(df_raw: pd.DataFrame, prices_dict: dict, monthly_op_cost: int = 0) -> dict:
+    # TODO: BE - Hitung omset dan profit dari database yang sudah tersimpan harga produknya.
+    # Saat ini menggunakan aproksimasi karena data harian di-aggregate.
+    
+    # Jika harga kosong sama sekali, kembalikan state false
+    if not prices_dict:
+        return {"show_omset": False, "show_profit": False, "show_net_profit": False}
+        
+    total_omset = 0
+    total_profit = 0
+    
+    has_any_modal = False
+    unpriced_count = 0
+    
+    df = df_raw.copy()
+    
+    for prod in df['nama_produk'].unique():
+        prod_data = prices_dict.get(prod, {})
+        hj = prod_data.get('harga_jual') or 0
+        hm = prod_data.get('harga_modal') or 0
+        
+        if hj == 0:
+            unpriced_count += 1
+            continue
+            
+        if hm > 0:
+            has_any_modal = True
+            
+        qty = df[df['nama_produk'] == prod]['jumlah_terjual'].sum()
+        total_omset += (qty * hj)
+        
+        if hm > 0:
+            total_profit += (qty * (hj - hm))
+            
+    # TODO: BE - Proporsi 30 hari per bulan ini adalah pendekatan kasar, sebaiknya diganti perhitungan kalender yang lebih presisi (jumlah hari aktual di bulan tersebut) saat integrasi backend
+    jumlah_hari = df['tanggal'].nunique()
+    biaya_operasional_periode = (monthly_op_cost / 30) * jumlah_hari
+    net_profit = total_profit - biaya_operasional_periode
+            
+    return {
+        "show_omset": True,
+        "show_profit": has_any_modal,
+        "show_net_profit": (has_any_modal and monthly_op_cost > 0),
+        "omset": total_omset,
+        "profit": total_profit,
+        "net_profit": net_profit,
+        "unpriced_count": unpriced_count
+    }
+
+
 def get_sales_trend_data() -> pd.DataFrame:
     # Filter 30 hari terakhir
     max_date = df_daily_all['tanggal'].max()
@@ -169,8 +219,66 @@ with col4:
 
 st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
 
+# ── B. Estimasi Omset & Profit ────────────────────────────────────────────────
+prices_dict = st.session_state.get("product_prices", {})
+monthly_op_cost = st.session_state.get("monthly_operational_cost", 0)
+pricing_summary = get_pricing_summary(df_sales_raw, prices_dict, monthly_op_cost)
 
-# ── B. Chart: Sales Trend ─────────────────────────────────────────────────────
+if pricing_summary["show_omset"]:
+    def format_idr(val):
+        # Handle negative values properly
+        if val < 0:
+            return f"-Rp {abs(val):,.0f}".replace(",", ".")
+        return f"Rp {val:,.0f}".replace(",", ".")
+        
+    if pricing_summary["show_net_profit"]:
+        num_cols = 3
+    elif pricing_summary["show_profit"]:
+        num_cols = 2
+    else:
+        num_cols = 1
+        
+    p_cols = st.columns(num_cols, gap="small")
+    
+    with p_cols[0]:
+        with st.container(border=True):
+            st.markdown(
+                "<div class='sb-card-label'>Estimasi Omset (Periode Data)</div>"
+                f"<div class='sb-card-value'>{format_idr(pricing_summary['omset'])}</div>"
+                "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Total estimasi pendapatan kotor berdasarkan harga jual.</div>",
+                unsafe_allow_html=True,
+            )
+            if pricing_summary["unpriced_count"] > 0:
+                st.markdown(
+                    f"<div style='font-size:0.7rem; color:#94A3B8; margin-top:0.3rem;'>Catatan: {pricing_summary['unpriced_count']} produk belum dihitung karena belum memiliki harga jual.</div>",
+                    unsafe_allow_html=True,
+                )
+    
+    if pricing_summary["show_profit"]:
+        with p_cols[1]:
+            with st.container(border=True):
+                st.markdown(
+                    "<div class='sb-card-label'>Estimasi Keuntungan Kotor</div>"
+                    f"<div class='sb-card-value'>{format_idr(pricing_summary['profit'])}</div>"
+                    "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Total estimasi keuntungan kotor (harga jual dikurangi modal, untuk produk dengan harga modal terisi). Belum termasuk biaya operasional.</div>",
+                    unsafe_allow_html=True,
+                )
+                
+    if pricing_summary["show_net_profit"]:
+        with p_cols[2]:
+            # Jika minus, textnya merah? Biarkan default sesuai theme
+            with st.container(border=True):
+                st.markdown(
+                    "<div class='sb-card-label'>Estimasi Keuntungan Bersih</div>"
+                    f"<div class='sb-card-value'>{format_idr(pricing_summary['net_profit'])}</div>"
+                    "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Keuntungan kotor dikurangi estimasi biaya operasional untuk periode data ini.</div>",
+                    unsafe_allow_html=True,
+                )
+
+    st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+
+
+# ── C. Chart: Sales Trend ─────────────────────────────────────────────────────
 st.markdown("<h3>Tren Penjualan (30 Hari Terakhir)</h3>", unsafe_allow_html=True)
 
 df_sales = get_sales_trend_data()

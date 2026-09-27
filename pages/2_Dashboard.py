@@ -40,8 +40,17 @@ def get_summary_data() -> dict:
     recent_daily = df_daily_all.tail(7)['jumlah_terjual'].mean()
     forecast_hari = int(recent_daily) if not pd.isna(recent_daily) else 0
     
-    # Dummy logic untuk restock count: statis 3 atau persentase produk
-    restock_count = min(3, total_produk)
+    # Hitung rekomendasi dari logic terpusat agar konsisten dengan halaman Recommendation
+    from utils.recommendations import get_product_recommendations
+    prices_dict = st.session_state.get("product_prices", {})
+    rekomendasi = get_product_recommendations(df_sales_raw, prices_dict)
+    
+    recommended_products = set()
+    for items in rekomendasi.values():
+        for item in items:
+            recommended_products.add(item["nama"])
+            
+    restock_count = len(recommended_products)
     
     # Dummy logic untuk risk status
     risk_status = "Aman"

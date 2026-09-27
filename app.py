@@ -43,7 +43,7 @@ if st.session_state.logged_in:
         # Tambahkan halaman baru di sini setelah dibuat:
         st.Page("pages/3_Data_Management.py", title="Data Management",  icon=":material/upload_file:"),
         st.Page("pages/4_Forecast.py",         title="Forecast",          icon=":material/trending_up:"),
-        # st.Page("pages/5_Recommendation.py",   title="Rekomendasi",       icon=":material/recommend:"),
+        st.Page("pages/5_Recommendation.py",   title="Rekomendasi",       icon=":material/recommend:"),
         # st.Page("pages/6_Product_Analysis.py", title="Analisis Produk",   icon=":material/bar_chart:"),
         # st.Page("pages/7_AI_Assistant.py",     title="AI Assistant",      icon=":material/smart_toy:"),
         # st.Page("pages/8_Settings.py",         title="Pengaturan",        icon=":material/settings:"),

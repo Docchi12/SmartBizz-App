@@ -10,11 +10,9 @@ try:
         st.stop()
         
     from utils.assistant import get_assistant_reply
-    prices_dict = st.session_state.get("product_prices", {})
-    monthly_op_cost = st.session_state.get("monthly_operational_cost", 0)
     
     st.markdown("<h2 style='margin-bottom:0.1rem;'>Asisten AI</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Tanya apa saja soal penjualan, stok, dan untung usaha Anda.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Tanya apa saja soal penjualan, permintaan, dan stok usaha Anda.</p>", unsafe_allow_html=True)
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     
     # 8. DATA BERUBAH: Penanda unik data (jumlah baris + tanggal awal + tanggal akhir)
@@ -67,11 +65,10 @@ try:
         c1, c2 = st.columns(2)
         with c1:
             if st.button("Apa produk saya yang terlaris?", use_container_width=True): user_q = "Apa produk saya yang terlaris?"
-            if st.button("Produk apa yang perlu ditambah stoknya?", use_container_width=True): user_q = "Produk apa yang perlu ditambah stoknya?"
-            if st.button("Berapa omset saya?", use_container_width=True): user_q = "Berapa omset saya?"
+            if st.button("Produk apa yang stoknya perlu segera ditambah?", use_container_width=True): user_q = "Produk apa yang stoknya perlu segera ditambah?"
         with c2:
             if st.button("Perkiraan penjualan minggu depan?", use_container_width=True): user_q = "Perkiraan penjualan minggu depan?"
-            if st.button("Produk apa yang untungnya tipis?", use_container_width=True): user_q = "Produk apa yang untungnya tipis?"
+            if st.button("Produk apa yang mulai sepi peminat?", use_container_width=True): user_q = "Produk apa yang mulai sepi peminat?"
     
     # Input utama (selalu di bawah)
     typed_q = st.chat_input("Tanya soal penjualan Anda...")
@@ -91,7 +88,7 @@ try:
         with st.chat_message("assistant"):
             try:
                 # Titik sambung ke logika jawaban (nantinya ke BE/LLM)
-                raw_reply = get_assistant_reply(user_q, df_sales_raw, prices_dict, monthly_op_cost)
+                raw_reply = get_assistant_reply(user_q, df_sales_raw)
                 
                 # Render jawaban dengan efek mengetik
                 st.write_stream(stream_data(raw_reply))

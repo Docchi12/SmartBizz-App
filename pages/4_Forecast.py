@@ -40,7 +40,7 @@ df_agg = df.groupby(['nama_produk', 'tanggal'])['jumlah_terjual'].sum().reset_in
 with st.container(border=True):
     # Penentuan default: Produk dengan total penjualan terbanyak historis
     # Alasan: Produk terlaris (best seller) biasanya adalah prioritas utama 
-    # UMKM untuk selalu dijaga stoknya karena paling menguntungkan.
+    # UMKM untuk selalu dijaga stoknya karena permintaannya diperkirakan paling tinggi.
     total_sales_per_product = df.groupby('nama_produk')['jumlah_terjual'].sum()
     default_product = total_sales_per_product.idxmax()
     

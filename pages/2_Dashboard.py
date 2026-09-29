@@ -42,15 +42,9 @@ def get_summary_data() -> dict:
     
     # Hitung rekomendasi dari logic terpusat agar konsisten dengan halaman Recommendation
     from utils.recommendations import get_product_recommendations
-    prices_dict = st.session_state.get("product_prices", {})
-    rekomendasi = get_product_recommendations(df_sales_raw, prices_dict)
+    rekomendasi = get_product_recommendations(df_sales_raw)
     
-    recommended_products = set()
-    for items in rekomendasi.values():
-        for item in items:
-            recommended_products.add(item["nama"])
-            
-    restock_count = len(recommended_products)
+    restock_count = len(rekomendasi.get("kurang_stok", []))
     
     # Dummy logic untuk risk status
     risk_status = "Aman"
@@ -63,9 +57,6 @@ def get_summary_data() -> dict:
         "restock_count":  restock_count,
         "risk_status":    risk_status,
     }
-
-
-from utils.analysis import get_pricing_summary
 
 
 def get_sales_trend_data() -> pd.DataFrame:
@@ -181,66 +172,7 @@ with col4:
 
 st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
 
-# ── B. Estimasi Omset & Profit ────────────────────────────────────────────────
-prices_dict = st.session_state.get("product_prices", {})
-monthly_op_cost = st.session_state.get("monthly_operational_cost", 0)
-pricing_summary = get_pricing_summary(df_sales_raw, prices_dict, monthly_op_cost)
-
-if pricing_summary["show_omset"]:
-    def format_idr(val):
-        # Handle negative values properly
-        if val < 0:
-            return f"-Rp {abs(val):,.0f}".replace(",", ".")
-        return f"Rp {val:,.0f}".replace(",", ".")
-        
-    if pricing_summary["show_net_profit"]:
-        num_cols = 3
-    elif pricing_summary["show_profit"]:
-        num_cols = 2
-    else:
-        num_cols = 1
-        
-    p_cols = st.columns(num_cols, gap="small")
-    
-    with p_cols[0]:
-        with st.container(border=True):
-            st.markdown(
-                "<div class='sb-card-label'>Estimasi Omset (Periode Data)</div>"
-                f"<div class='sb-card-value'>{format_idr(pricing_summary['omset'])}</div>"
-                "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Total estimasi pendapatan kotor berdasarkan harga jual.</div>",
-                unsafe_allow_html=True,
-            )
-            if pricing_summary["unpriced_count"] > 0:
-                st.markdown(
-                    f"<div style='font-size:0.7rem; color:#94A3B8; margin-top:0.3rem;'>Catatan: {pricing_summary['unpriced_count']} produk belum dihitung karena belum memiliki harga jual.</div>",
-                    unsafe_allow_html=True,
-                )
-    
-    if pricing_summary["show_profit"]:
-        with p_cols[1]:
-            with st.container(border=True):
-                st.markdown(
-                    "<div class='sb-card-label'>Estimasi Keuntungan Kotor</div>"
-                    f"<div class='sb-card-value'>{format_idr(pricing_summary['profit'])}</div>"
-                    "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Total estimasi keuntungan kotor (harga jual dikurangi modal, untuk produk dengan harga modal terisi). Belum termasuk biaya operasional.</div>",
-                    unsafe_allow_html=True,
-                )
-                
-    if pricing_summary["show_net_profit"]:
-        with p_cols[2]:
-            # Jika minus, textnya merah? Biarkan default sesuai theme
-            with st.container(border=True):
-                st.markdown(
-                    "<div class='sb-card-label'>Estimasi Keuntungan Bersih</div>"
-                    f"<div class='sb-card-value'>{format_idr(pricing_summary['net_profit'])}</div>"
-                    "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Keuntungan kotor dikurangi estimasi biaya operasional untuk periode data ini.</div>",
-                    unsafe_allow_html=True,
-                )
-
-    st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
-
-
-# ── C. Chart: Sales Trend ─────────────────────────────────────────────────────
+# ── B. Chart: Sales Trend ─────────────────────────────────────────────────────
 st.markdown("<h3>Tren Penjualan (30 Hari Terakhir)</h3>", unsafe_allow_html=True)
 
 df_sales = get_sales_trend_data()

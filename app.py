@@ -46,7 +46,7 @@ if st.session_state.logged_in:
         st.Page("pages/5_Recommendation.py",   title="Rekomendasi",       icon=":material/recommend:"),
         st.Page("pages/6_Product_Analysis.py", title="Analisis Produk",   icon=":material/bar_chart:"),
         st.Page("pages/7_AI_Assistant.py",     title="Asisten AI",      icon=":material/smart_toy:"),
-        # st.Page("pages/8_Settings.py",         title="Pengaturan",        icon=":material/settings:"),
+        st.Page("pages/8_Settings.py",         title="Pengaturan",        icon=":material/settings:"),
     ]
     nav_position = "sidebar"   # Nav tampil di sidebar saat sudah login
 else:

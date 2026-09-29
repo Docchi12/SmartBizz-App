@@ -43,10 +43,18 @@ def get_assistant_reply(question: str, df_sales: pd.DataFrame, prices: dict, mon
             continue
             
         # Pencocokan parsial berdasarkan kata signifikan
-        for w in q_words:
-            if len(w) > 2 and w in p_lower:
+        p_words = p_lower.split()
+        if len(p_words) == 1:
+            for w in q_words:
+                if len(w) > 2 and w == p_lower:
+                    matched_products.append(p)
+                    break
+        else:
+            # Jika nama produk > 1 kata (misal "Es Teh Manis"), butuh minimal 2 kata yang cocok
+            # agar kata umum seperti "manis" di "laris manis" tidak membajak keseluruhan.
+            match_count = sum(1 for w in q_words if w in p_words)
+            if match_count >= 2:
                 matched_products.append(p)
-                break
                 
     # Aturan 8: Jika produk disebut (Poin 1)
     if matched_products:
@@ -159,75 +167,24 @@ def get_assistant_reply(question: str, df_sales: pd.DataFrame, prices: dict, mon
             
         return resp.replace(",", ".")
         
-    # Aturan 1: Laris
-    if any(k in q for k in ["laris", "terlaris", "paling banyak"]):
-        df_jual = df[df['jumlah_terjual'] > 0]
-        if df_jual.empty:
-            return "Belum ada penjualan positif di data Anda."
-        top_prod = df_jual.groupby("nama_produk")["jumlah_terjual"].sum().idxmax()
-        top_qty = df_jual.groupby("nama_produk")["jumlah_terjual"].sum().max()
-        return f"Produk yang paling laris manis adalah **{top_prod}**, dengan total penjualan sebanyak {int(top_qty):,} porsi!".replace(",", ".")
-        
-    # Aturan 2: Omset
-    if any(k in q for k in ["omset", "pendapatan", "penjualan total"]):
-        df_jual = df[df['jumlah_terjual'] > 0]
-        total_omset = 0
-        unpriced = []
-        for p in df_jual['nama_produk'].unique():
-            hj = prices.get(p, {}).get("harga_jual", 0)
-            if hj > 0:
-                qty = df_jual[df_jual['nama_produk'] == p]['jumlah_terjual'].sum()
-                total_omset += (qty * hj)
-            else:
-                unpriced.append(p)
-                
-        if total_omset == 0 and len(unpriced) > 0:
-            return "Saya belum bisa menghitung omset Anda karena harga jual belum diisi sama sekali. Yuk isi dulu harganya di halaman Data Management!"
-            
-        resp = f"Total omset Anda yang berhasil saya hitung adalah Rp {int(total_omset):,.0f}.\n\n".replace(",", ".")
-        if unpriced:
-            resp += "Tapi ingat, angka ini belum termasuk penjualan beberapa produk yang belum diatur harga jualnya (seperti " + ", ".join([f"**{x}**" for x in unpriced[:3]]) + (", dll" if len(unpriced)>3 else "") + ")."
-        return resp
-        
-    # Aturan 3: Untung
-    if any(k in q for k in ["untung", "keuntungan", "laba", "profit"]):
-        df_jual = df[df['jumlah_terjual'] > 0]
-        total_untung_kotor = 0
-        has_modal = False
-        for p in df_jual['nama_produk'].unique():
-            hj = prices.get(p, {}).get("harga_jual", 0)
-            hm = prices.get(p, {}).get("harga_modal", 0)
-            if hj > 0 and hm > 0:
-                has_modal = True
-                qty = df_jual[df_jual['nama_produk'] == p]['jumlah_terjual'].sum()
-                total_untung_kotor += (qty * (hj - hm))
-                
-        if not has_modal:
-            return "Saya tidak bisa menghitung keuntungan karena kolom 'Harga Modal' belum diisi. Silakan mampir ke Data Management untuk mengisinya ya."
-            
-        resp = f"Keuntungan kotor Anda (omset dikurangi biaya bahan) adalah sekitar Rp {int(total_untung_kotor):,.0f}.\n\n".replace(",", ".")
-        if monthly_operational_cost > 0:
-            jml_hari = df_jual['tanggal'].nunique()
-            biaya_ops = (monthly_operational_cost / 30) * jml_hari
-            bersih = total_untung_kotor - biaya_ops
-            resp += f"Nah, kalau dipotong biaya operasional harian, keuntungan bersih Anda di periode ini diperkirakan menjadi Rp {int(bersih):,.0f}.".replace(",", ".")
-        return resp
-        
-    # Aturan 4, 5, 6 reuse rekomendasi
+    from utils.analysis import get_pricing_summary
     recs = get_product_recommendations(df_sales, prices)
     
-    # Aturan 4: Stok
-    if any(k in q for k in ["stok", "restok", "tambah", "siapkan"]):
-        items = recs.get("perlu_tambah_stok", [])
-        if not items:
-            return "Dari data yang ada, sepertinya belum ada produk yang trennya naik tajam sampai perlu segera ditambah stoknya."
-        resp = "Ini produk yang sedang naik daun dan mungkin stok bahannya perlu Anda perbanyak:\n"
-        for i in items:
-            resp += f"- **{i['nama']}**: {i['alasan']}\n"
-        return resp
-        
-    # Aturan 5: Turun
-    if any(k in q for k in ["turun", "sepi", "kurangi", "menurun"]):
+    # === DETEKSI INTENSI & KOMBINASI KATA ===
+    # Kita menggunakan flag untuk mendeteksi kombinasi kata yang berpotensi tumpang tindih
+    is_turun_sepi = any(k in q for k in ["turun", "sepi", "kurang", "menurun", "tidak perlu"])
+    is_margin_buruk = any(k in q for k in ["tipis", "rugi", "kecil", "sedikit", "tekor", "harga"])
+    is_stok_tambah = any(k in q for k in ["tambah", "restok", "siapkan"])
+    is_stok_umum = any(k in q for k in ["stok", "bahan"])
+    is_prediksi = any(k in q for k in ["prediksi", "perkiraan", "ramalan", "minggu", "besok"])
+    is_laris = any(k in q for k in ["laris", "terlaris", "paling banyak", "paling laku"])
+    is_omset = any(k in q for k in ["omset", "pendapatan", "penjualan total"])
+    is_untung = any(k in q for k in ["untung", "keuntungan", "laba", "profit"])
+
+    # Evaluasi aturan secara berurutan, dari yang paling spesifik ke metrik umum (hanya 1 jawaban)
+    
+    # Aturan 5: Turun (Pantau/Kurangi Produksi)
+    if is_turun_sepi:
         items = recs.get("pantau_kurangi", [])
         if not items:
             return "Bagus! Saat ini tidak ada produk yang menunjukkan tanda-tanda sepi. Semuanya cukup stabil atau naik."
@@ -236,8 +193,8 @@ def get_assistant_reply(question: str, df_sales: pd.DataFrame, prices: dict, mon
             resp += f"- **{i['nama']}**: {i['alasan']}\n"
         return resp
         
-    # Aturan 6: Harga/Tipis
-    if any(k in q for k in ["harga", "tipis", "rugi", "kecil"]):
+    # Aturan 6: Harga/Tipis (Tinjau Harga/Margin)
+    elif is_margin_buruk:
         items = recs.get("tinjau_harga", [])
         if not items:
             return "Semua produk yang sudah ada harga jual & modalnya punya untung per porsi yang lumayan sehat. Tidak ada yang terdeteksi rugi."
@@ -246,30 +203,153 @@ def get_assistant_reply(question: str, df_sales: pd.DataFrame, prices: dict, mon
             resp += f"- **{i['nama']}**: {i['alasan']}\n"
         return resp
         
+    # Aturan 4: Stok (Perlu Tambah)
+    elif is_stok_tambah or (is_stok_umum and not is_turun_sepi and not is_margin_buruk):
+        items = recs.get("perlu_tambah_stok", [])
+        if not items:
+            return "Dari data yang ada, sepertinya belum ada produk yang trennya naik tajam sampai perlu segera ditambah stoknya."
+        resp = "Ini produk yang sedang naik daun dan mungkin stok bahannya perlu Anda perbanyak:\n"
+        for i in items:
+            resp += f"- **{i['nama']}**: {i['alasan']}\n"
+        return resp
+        
     # Aturan 7: Prediksi global
-    if any(k in q for k in ["prediksi", "perkiraan", "ramalan", "minggu", "besok"]):
+    elif is_prediksi:
+        is_uang = is_omset or is_untung or any(k in q for k in ["rupiah", "uang", "duit", "rp"])
         df_jual = df[df['jumlah_terjual'] > 0]
-        df_daily = df_jual.groupby('tanggal')['jumlah_terjual'].sum().reset_index()
-        df_pred = generate_dummy_forecast(df_daily, horizon_days=7)
-        if df_pred.empty:
-            return "Data harian Anda belum cukup stabil untuk dibuatkan prediksinya."
+        
+        if not is_uang:
+            df_daily = df_jual.groupby('tanggal')['jumlah_terjual'].sum().reset_index()
+            df_pred = generate_dummy_forecast(df_daily, horizon_days=7)
+            if df_pred.empty:
+                return "Data harian Anda belum cukup stabil untuk dibuatkan prediksinya."
             
-        total_pred = df_pred['prediksi'].sum()
-        recent_total = df_daily['jumlah_terjual'].tail(7).sum()
-        trend_pct = ((total_pred - recent_total) / recent_total * 100) if recent_total > 0 else 0
-        
-        arah = "stabil"
-        if trend_pct > 5: arah = "naik"
-        elif trend_pct < -5: arah = "turun"
-        
-        resp = f"Secara keseluruhan, perkiraan penjualan untuk 7 hari ke depan adalah sekitar {int(total_pred):,} porsi. "
-        if arah == "naik":
-            resp += f"Ini artinya ada potensi kenaikan sekitar {abs(trend_pct):.0f}% dibanding minggu lalu. Usaha Anda lagi bagus!"
-        elif arah == "turun":
-            resp += f"Sepertinya ada sedikit penurunan tren sekitar {abs(trend_pct):.0f}%. Mari pikirkan strategi promosi baru."
+            total_pred = df_pred['prediksi'].sum()
+            recent_total = df_daily['jumlah_terjual'].tail(7).sum()
+            trend_pct = ((total_pred - recent_total) / recent_total * 100) if recent_total > 0 else 0
+            
+            arah = "stabil"
+            if trend_pct > 5: arah = "naik"
+            elif trend_pct < -5: arah = "turun"
+            
+            resp = f"Secara keseluruhan, perkiraan penjualan untuk 7 hari ke depan adalah sekitar {int(total_pred):,} porsi. "
+            if arah == "naik":
+                resp += f"Ini artinya ada potensi kenaikan sekitar {abs(trend_pct):.0f}% dibanding minggu lalu. Usaha Anda lagi bagus!"
+            elif arah == "turun":
+                resp += f"Sepertinya ada sedikit penurunan tren sekitar {abs(trend_pct):.0f}%. Mari pikirkan strategi promosi baru."
+            else:
+                resp += "Kelihatannya penjualan ke depan akan berjalan stabil seperti biasa."
+            return resp.replace(",", ".")
         else:
-            resp += "Kelihatannya penjualan ke depan akan berjalan stabil seperti biasa."
-        return resp.replace(",", ".")
+            total_pred_rp = 0
+            recent_total_rp = 0
+            unpriced = []
+            
+            for p in df_jual['nama_produk'].unique():
+                hj = prices.get(p, {}).get("harga_jual", 0)
+                if hj == 0:
+                    unpriced.append(p)
+                    continue
+                    
+                df_p = df_jual[df_jual['nama_produk'] == p]
+                df_daily_p = df_p.groupby('tanggal')['jumlah_terjual'].sum().reset_index()
+                if df_daily_p.empty: continue
+                
+                df_pred_p = generate_dummy_forecast(df_daily_p, horizon_days=7)
+                if not df_pred_p.empty:
+                    total_pred_rp += (df_pred_p['prediksi'].sum() * hj)
+                    
+                recent_total_rp += (df_daily_p['jumlah_terjual'].tail(7).sum() * hj)
+                
+            if total_pred_rp == 0 and len(unpriced) > 0:
+                return "Saya belum bisa memprediksi nilai omset ke depan karena harga jual produk belum diisi. Silakan isi dulu di Data Management ya."
+            
+            trend_pct = ((total_pred_rp - recent_total_rp) / recent_total_rp * 100) if recent_total_rp > 0 else 0
+            arah = "stabil"
+            if trend_pct > 5: arah = "naik"
+            elif trend_pct < -5: arah = "turun"
+            
+            resp_pred = f"Secara keseluruhan, perkiraan pendapatan untuk 7 hari ke depan adalah sekitar Rp {int(total_pred_rp):,.0f}. ".replace(",", ".")
+            if arah == "naik":
+                resp_pred += f"Ini artinya ada potensi kenaikan sekitar {abs(trend_pct):.0f}% dibanding minggu lalu. Usaha Anda lagi bagus!"
+            elif arah == "turun":
+                resp_pred += f"Sepertinya ada sedikit penurunan tren sekitar {abs(trend_pct):.0f}%. Mari pikirkan strategi promosi baru."
+            else:
+                resp_pred += "Kelihatannya pendapatan ke depan akan berjalan stabil seperti biasa."
+                
+            if unpriced:
+                unpriced_list = ", ".join([f"**{x}**" for x in unpriced[:3]])
+                if len(unpriced) > 3: unpriced_list += ", dll"
+                resp_pred += f" Oh ya, prediksi ini belum memasukkan produk yang harganya kosong (seperti {unpriced_list})."
+                
+            return resp_pred
+        
+    # Aturan 1: Laris
+    elif is_laris:
+        df_jual = df[df['jumlah_terjual'] > 0]
+        if df_jual.empty:
+            return "Belum ada penjualan positif di data Anda."
+        
+        top_prod = df_jual.groupby("nama_produk")["jumlah_terjual"].sum().idxmax()
+        top_qty = df_jual.groupby("nama_produk")["jumlah_terjual"].sum().max()
+        return f"Produk yang paling laris manis adalah **{top_prod}**, dengan total penjualan sebanyak {int(top_qty):,} porsi!".replace(",", ".")
+        
+    # Aturan 2: Omset (Global)
+    elif is_omset:
+        summary = get_pricing_summary(df, prices, monthly_operational_cost)
+        
+        tgl_min = df['tanggal'].min().strftime('%d %b %Y')
+        tgl_max = df['tanggal'].max().strftime('%d %b %Y')
+        periode = f"selama {tgl_min} hingga {tgl_max}" if tgl_min != tgl_max else f"pada {tgl_min}"
+        
+        unpriced = [p for p in df['nama_produk'].unique() if prices.get(p, {}).get("harga_jual", 0) == 0]
+        priced_count = len(df['nama_produk'].unique()) - len(unpriced)
+        
+        if priced_count == 0:
+            return "Saya belum bisa menghitung omset Anda karena tidak ada satu pun produk yang harga jualnya sudah diisi. Yuk isi dulu harganya di halaman Data Management!"
+            
+        omset = summary.get("omset", 0)
+        resp = f"Total omset Anda {periode} adalah Rp {int(omset):,.0f}.\n\n".replace(",", ".")
+        resp += f"Angka ini dihitung dari penjualan {priced_count} produk yang sudah memiliki harga jual."
+        
+        if unpriced:
+            unpriced_list = ", ".join([f"**{x}**" for x in unpriced[:3]])
+            if len(unpriced) > 3:
+                unpriced_list += ", dll"
+            resp += f" Ada beberapa produk yang belum ikut terhitung karena harganya belum diisi (seperti {unpriced_list}). Silakan lengkapi di Data Management ya."
+            
+        return resp
+        
+    # Aturan 3: Untung (Global)
+    elif is_untung:
+        summary = get_pricing_summary(df, prices, monthly_operational_cost)
+        
+        if not summary.get("show_profit"):
+            return "Saya tidak bisa menghitung keuntungan karena kolom 'Harga Modal' belum diisi untuk produk mana pun. Silakan mampir ke Data Management untuk mengisinya ya."
+            
+        tgl_min = df['tanggal'].min().strftime('%d %b %Y')
+        tgl_max = df['tanggal'].max().strftime('%d %b %Y')
+        periode = f"selama {tgl_min} hingga {tgl_max}" if tgl_min != tgl_max else f"pada {tgl_min}"
+        
+        has_modal_count = sum(1 for p in df['nama_produk'].unique() if prices.get(p, {}).get("harga_modal", 0) > 0)
+        unpriced = [p for p in df['nama_produk'].unique() if prices.get(p, {}).get("harga_modal", 0) == 0]
+        
+        profit = summary.get("profit", 0)
+        net_profit = summary.get("net_profit", 0)
+        
+        resp = f"Keuntungan kotor Anda (omset dikurangi biaya bahan) {periode} adalah Rp {int(profit):,.0f}.\n\n".replace(",", ".")
+        
+        if summary.get("show_net_profit"):
+            resp += f"Nah, setelah dipotong biaya operasional, keuntungan bersih Anda diperkirakan menjadi Rp {int(net_profit):,.0f}.\n\n".replace(",", ".")
+            
+        resp += f"Perhitungan ini mencakup {has_modal_count} produk."
+        if unpriced:
+            unpriced_list = ", ".join([f"**{x}**" for x in unpriced[:3]])
+            if len(unpriced) > 3:
+                unpriced_list += ", dll"
+            resp += f" Produk yang harga modalnya masih kosong (seperti {unpriced_list}) belum dihitung keuntungannya."
+            
+        return resp
         
     # Aturan 9: Sapaan
     if any(k in q for k in ["halo", "hai", "bisa apa", "bantu apa", "tolong", "hei"]):

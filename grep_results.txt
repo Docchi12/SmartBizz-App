@@ -1,0 +1,137 @@
+.venv\Lib\site-packages\_plotly_utils\colors\carto.py:158: Purp = [
+pages\2_Dashboard.py:184: # ── B. Estimasi Omset & Profit ────────────────────────────────────────────────
+pages\2_Dashboard.py:189: if pricing_summary["show_omset"]:
+pages\2_Dashboard.py:193: return f"-Rp {abs(val):,.0f}".replace(",", ".")
+pages\2_Dashboard.py:194: return f"Rp {val:,.0f}".replace(",", ".")
+pages\2_Dashboard.py:208: "<div class='sb-card-label'>Estimasi Omset (Periode Data)</div>"
+pages\2_Dashboard.py:209: f"<div class='sb-card-value'>{format_idr(pricing_summary['omset'])}</div>"
+pages\2_Dashboard.py:223: "<div class='sb-card-label'>Estimasi Keuntungan Kotor</div>"
+pages\2_Dashboard.py:225: "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Total estimasi keuntungan kotor (harga jual dikurangi modal, untuk produk dengan harga modal terisi). Belum termasuk biaya operasional.</div>",
+pages\2_Dashboard.py:234: "<div class='sb-card-label'>Estimasi Keuntungan Bersih</div>"
+pages\2_Dashboard.py:236: "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Keuntungan kotor dikurangi estimasi biaya operasional untuk periode data ini.</div>",
+pages\3_Data_Management.py:145: "Masukkan harga jual (dan modal jika ada) untuk mengaktifkan estimasi keuntungan di Dashboard.</p>",
+pages\3_Data_Management.py:153: filled_count = sum(1 for p in unique_products if prices_dict.get(p, {}).get("harga_jual", 0) > 0)
+pages\3_Data_Management.py:169: "harga_jual": prices_dict.get(p, {}).get("harga_jual", 0),
+pages\3_Data_Management.py:170: "harga_modal": prices_dict.get(p, {}).get("harga_modal", 0)
+pages\3_Data_Management.py:182: "Harga Jual (Rp)": st.session_state["working_prices"][p]["harga_jual"],
+pages\3_Data_Management.py:183: "Harga Modal (Rp)": st.session_state["working_prices"][p]["harga_modal"]
+pages\3_Data_Management.py:223: st.session_state["working_prices"][p]["harga_jual"] = int(row["Harga Jual (Rp)"])
+pages\3_Data_Management.py:224: st.session_state["working_prices"][p]["harga_modal"] = int(row["Harga Modal (Rp)"])
+pages\3_Data_Management.py:231: "harga_jual": st.session_state["working_prices"][p]["harga_jual"],
+pages\3_Data_Management.py:232: "harga_modal": st.session_state["working_prices"][p]["harga_modal"]
+pages\3_Data_Management.py:240: if val["harga_jual"] == 0:
+pages\3_Data_Management.py:242: if val["harga_modal"] > val["harga_jual"]:
+pages\3_Data_Management.py:247: st.warning("Beberapa produk belum diisi harga jualnya — estimasi keuntungan belum bisa dihitung untuk produk tersebut.")
+pages\3_Data_Management.py:259: "Jika usaha Anda punya biaya rutin seperti sewa tempat, gaji karyawan, atau listrik, masukkan total perkiraan biaya per bulan di sini untuk melihat estimasi keuntungan bersih yang lebih akurat. Kosongkan/isi 0 jika tidak ada (misalnya usaha rumahan atau kaki lima tanpa biaya sewa/karyawan).</p>",
+pages\3_Data_Management.py:397: "perhitungan omset dan prediksi penjualan Anda bisa meleset dan merugikan bisnis. "
+pages\4_Forecast.py:43: # UMKM untuk selalu dijaga stoknya karena paling menguntungkan.
+pages\5_Recommendation.py:16: st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Rekomendasi otomatis berbasis analisis tren penjualan dan keuntungan per porsi produk Anda.</p>", unsafe_allow_html=True)
+pages\5_Recommendation.py:26: if prices_dict.get(p, {}).get("harga_modal", 0) > 0:
+pages\5_Recommendation.py:53: render_section("Tinjau Harga Jual/Untung", "💰", rekomendasi["tinjau_harga"])
+pages\6_Product_Analysis.py:16: st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Rincian performa setiap produk berdasarkan volume penjualan, omset, dan keuntungan per porsi.</p>", unsafe_allow_html=True)
+pages\6_Product_Analysis.py:28: df_prod["harga_jual"] = df_prod["nama_produk"].apply(lambda x: prices_dict.get(x, {}).get("harga_jual") or 0)
+pages\6_Product_Analysis.py:29: df_prod["harga_modal"] = df_prod["nama_produk"].apply(lambda x: prices_dict.get(x, {}).get("harga_modal") or 0)
+pages\6_Product_Analysis.py:31: if (df_prod["harga_jual"] > 0).any():
+pages\6_Product_Analysis.py:33: if (df_prod["harga_modal"] > 0).any():
+pages\6_Product_Analysis.py:37: df_prod["omset"] = df_prod["jumlah_terjual"] * df_prod["harga_jual"]
+pages\6_Product_Analysis.py:39: total_omset_all = df_prod.loc[df_prod["omset"] > 0, "omset"].sum()
+pages\6_Product_Analysis.py:40: df_prod["omset_pct"] = df_prod.apply(lambda row: (row["omset"] / total_omset_all * 100) if (total_omset_all > 0 and row["omset"] > 0) else 0, axis=1)
+pages\6_Product_Analysis.py:42: df_prod["untung_per_porsi"] = df_prod["harga_jual"] - df_prod["harga_modal"]
+pages\6_Product_Analysis.py:43: # Hanya hitung kontribusi untung jika harga_modal > 0 (karena jika 0 berarti tidak tahu, bukan gratis/100% untung)
+pages\6_Product_Analysis.py:44: df_prod["kontribusi_untung"] = df_prod.apply(lambda row: (row["harga_jual"] - row["harga_modal"]) * row["jumlah_terjual"] if row["harga_modal"] > 0 else 0, axis=1)
+pages\6_Product_Analysis.py:46: total_untung_all = df_prod.loc[df_prod["kontribusi_untung"] > 0, "kontribusi_untung"].sum()
+pages\6_Product_Analysis.py:47: df_prod["untung_pct"] = df_prod.apply(lambda row: (row["kontribusi_untung"] / total_untung_all * 100) if (total_untung_all > 0 and row["kontribusi_untung"] > 0) else 0, axis=1)
+pages\6_Product_Analysis.py:55: # Penyumbang Omset Terbesar
+pages\6_Product_Analysis.py:56: top_omset_row = df_prod.loc[df_prod['omset'].idxmax()]
+pages\6_Product_Analysis.py:58: label="Penyumbang Omset Terbesar",
+pages\6_Product_Analysis.py:59: value=top_omset_row['nama_produk'],
+pages\6_Product_Analysis.py:60: delta=f"{top_omset_row['omset_pct']:.0f}% dari total omset",
+pages\6_Product_Analysis.py:75: # Untung per Porsi Tertinggi
+pages\6_Product_Analysis.py:77: df_modal = df_prod[df_prod['harga_modal'] > 0]
+pages\6_Product_Analysis.py:79: top_margin_row = df_modal.loc[df_modal['untung_per_porsi'].idxmax()]
+pages\6_Product_Analysis.py:81: label="Untung per Porsi Tertinggi",
+pages\6_Product_Analysis.py:83: delta=f"Rp {top_margin_row['untung_per_porsi']:,}",
+pages\6_Product_Analysis.py:100: df_display = df_display.sort_values("omset", ascending=False)
+pages\6_Product_Analysis.py:108: df_final["Kontribusi Omset (Rp)"] = df_display.apply(lambda r: r['omset'] if r['harga_jual'] > 0 else None, axis=1)
+pages\6_Product_Analysis.py:109: df_final["Kontribusi Omset (%)"] = df_display.apply(lambda r: r['omset_pct'] if r['harga_jual'] > 0 else None, axis=1)
+pages\6_Product_Analysis.py:111: df_final["Untung per Porsi (Rp)"] = df_display.apply(lambda r: r['untung_per_porsi'] if r['harga_modal'] > 0 else None, axis=1)
+pages\6_Product_Analysis.py:112: df_final["Kontribusi Untung (Rp)"] = df_display.apply(lambda r: r['kontribusi_untung'] if r['harga_modal'] > 0 else None, axis=1)
+pages\6_Product_Analysis.py:113: df_final["Kontribusi Untung (%)"] = df_display.apply(lambda r: r['untung_pct'] if r['harga_modal'] > 0 else None, axis=1)
+pages\6_Product_Analysis.py:118: "Kontribusi Omset (Rp)": lambda x: f"Rp {int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
+pages\6_Product_Analysis.py:119: "Kontribusi Omset (%)": lambda x: f"{x:.1f}%" if pd.notna(x) else "-",
+pages\6_Product_Analysis.py:120: "Untung per Porsi (Rp)": lambda x: f"Rp {int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
+pages\6_Product_Analysis.py:121: "Kontribusi Untung (Rp)": lambda x: f"Rp {int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
+pages\6_Product_Analysis.py:122: "Kontribusi Untung (%)": lambda x: f"{x:.1f}%" if pd.notna(x) else "-",
+pages\6_Product_Analysis.py:136: st.markdown(f"<p style='font-size:0.8rem; color:#64748B; margin-top:0.5rem;'>*Catatan: {retur_str} (retur) tidak dihitung dalam persentase kontribusi produk lain, namun tetap mengurangi Total Terjual dan omset produk tersebut.</p>", unsafe_allow_html=True)
+pages\6_Product_Analysis.py:140: # 3. CHART PERBANDINGAN OMSET
+pages\6_Product_Analysis.py:141: st.markdown("<h5>Perbandingan Kontribusi Omset</h5>", unsafe_allow_html=True)
+pages\6_Product_Analysis.py:145: df_chart = df_prod[df_prod["omset"] > 0].sort_values("omset", ascending=True)
+pages\6_Product_Analysis.py:149: x="omset",
+pages\6_Product_Analysis.py:154: labels={"omset": "Omset (Rp)", "nama_produk": "Produk"}
+pages\6_Product_Analysis.py:167: st.info("Seluruh produk saat ini memiliki harga jual 0 sehingga tidak ada omset yang bisa dibandingkan.")
+pages\6_Product_Analysis.py:169: st.info("Isi harga jual produk di halaman Data Management untuk melihat perbandingan kontribusi omset di sini.")
+pages\7_AI_Assistant.py:17: st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Tanya apa saja soal penjualan, stok, dan untung usaha Anda.</p>", unsafe_allow_html=True)
+pages\7_AI_Assistant.py:71: if st.button("Berapa omset saya?", use_container_width=True): user_q = "Berapa omset saya?"
+pages\7_AI_Assistant.py:74: if st.button("Produk apa yang untungnya tipis?", use_container_width=True): user_q = "Produk apa yang untungnya tipis?"
+utils\analysis.py:4: # TODO: BE - Hitung omset dan profit dari database yang sudah tersimpan harga produknya.
+utils\analysis.py:9: return {"show_omset": False, "show_profit": False, "show_net_profit": False}
+utils\analysis.py:11: total_omset = 0
+utils\analysis.py:21: hj = prod_data.get('harga_jual') or 0
+utils\analysis.py:22: hm = prod_data.get('harga_modal') or 0
+utils\analysis.py:32: total_omset += (qty * hj)
+utils\analysis.py:43: "show_omset": True,
+utils\analysis.py:46: "omset": total_omset,
+utils\assistant.py:36: stopwords = ["berapa", "bagaimana", "apa", "omset", "penjualan", "untung", "laba", "margin", "prediksi", "ramalan", "hari", "ini", "besok", "kemarin", "minggu", "depan", "stok", "restok", "terlaris", "laris", "sepi", "turun", "naik", "produk", "saya", "yang", "buat", "dari", "ke", "di", "itu"]
+utils\assistant.py:68: # Total keseluruhan termasuk retur (untuk omset/untung/metrik absolut)
+utils\assistant.py:71: is_omset = any(k in q for k in ["omset", "pendapatan"])
+utils\assistant.py:72: is_untung = any(k in q for k in ["untung", "laba", "profit"])
+utils\assistant.py:75: if is_omset:
+utils\assistant.py:76: hj = prices.get(mentioned_product, {}).get("harga_jual", 0)
+utils\assistant.py:78: omset = qty * hj
+utils\assistant.py:79: resp = f"Total omset untuk **{mentioned_product}** adalah Rp {int(omset):,.0f} (dari total net {int(qty):,} porsi terjual).".replace(",", ".")
+utils\assistant.py:86: return f"Saya belum bisa menghitung omset **{mentioned_product}** karena harga jualnya belum diatur. Silakan isi dulu di Data Management."
+utils\assistant.py:88: if is_untung:
+utils\assistant.py:89: hj = prices.get(mentioned_product, {}).get("harga_jual", 0)
+utils\assistant.py:90: hm = prices.get(mentioned_product, {}).get("harga_modal", 0)
+utils\assistant.py:92: untung = qty * (hj - hm)
+utils\assistant.py:93: resp = f"Total keuntungan kotor untuk **{mentioned_product}** adalah Rp {int(untung):,.0f}.".replace(",", ".")
+utils\assistant.py:99: return f"Saya belum bisa menghitung keuntungan **{mentioned_product}** karena harga modal/jualnya belum lengkap. Silakan isi dulu di Data Management."
+utils\assistant.py:145: hj = p_data.get("harga_jual", 0)
+utils\assistant.py:146: hm = p_data.get("harga_modal", 0)
+utils\assistant.py:161: untung = hj - hm
+utils\assistant.py:162: resp += f"Untung per porsinya lumayan, yaitu Rp {untung:,.0f}."
+utils\assistant.py:164: resp += "Harganya sudah ada, tapi belum ada harga modal jadi saya tidak bisa hitung untungnya."
+utils\assistant.py:181: is_omset = any(k in q for k in ["omset", "pendapatan", "penjualan total"])
+utils\assistant.py:182: is_untung = any(k in q for k in ["untung", "keuntungan", "laba", "profit"])
+utils\assistant.py:200: return "Semua produk yang sudah ada harga jual & modalnya punya untung per porsi yang lumayan sehat. Tidak ada yang terdeteksi rugi."
+utils\assistant.py:201: resp = "Perhatian! Produk-produk ini terdeteksi punya untung per porsi yang tipis atau malah bikin tekor:\n"
+utils\assistant.py:218: is_uang = is_omset or is_untung or any(k in q for k in ["rupiah", "uang", "duit", "rp"])
+utils\assistant.py:244: total_pred_rp = 0
+utils\assistant.py:245: recent_total_rp = 0
+utils\assistant.py:249: hj = prices.get(p, {}).get("harga_jual", 0)
+utils\assistant.py:260: total_pred_rp += (df_pred_p['prediksi'].sum() * hj)
+utils\assistant.py:262: recent_total_rp += (df_daily_p['jumlah_terjual'].tail(7).sum() * hj)
+utils\assistant.py:264: if total_pred_rp == 0 and len(unpriced) > 0:
+utils\assistant.py:265: return "Saya belum bisa memprediksi nilai omset ke depan karena harga jual produk belum diisi. Silakan isi dulu di Data Management ya."
+utils\assistant.py:267: trend_pct = ((total_pred_rp - recent_total_rp) / recent_total_rp * 100) if recent_total_rp > 0 else 0
+utils\assistant.py:272: resp_pred = f"Secara keseluruhan, perkiraan pendapatan untuk 7 hari ke depan adalah sekitar Rp {int(total_pred_rp):,.0f}. ".replace(",", ".")
+utils\assistant.py:297: # Aturan 2: Omset (Global)
+utils\assistant.py:298: elif is_omset:
+utils\assistant.py:305: unpriced = [p for p in df['nama_produk'].unique() if prices.get(p, {}).get("harga_jual", 0) == 0]
+utils\assistant.py:309: return "Saya belum bisa menghitung omset Anda karena tidak ada satu pun produk yang harga jualnya sudah diisi. Yuk isi dulu harganya di halaman Data Management!"
+utils\assistant.py:311: omset = summary.get("omset", 0)
+utils\assistant.py:312: resp = f"Total omset Anda {periode} adalah Rp {int(omset):,.0f}.\n\n".replace(",", ".")
+utils\assistant.py:323: # Aturan 3: Untung (Global)
+utils\assistant.py:324: elif is_untung:
+utils\assistant.py:328: return "Saya tidak bisa menghitung keuntungan karena kolom 'Harga Modal' belum diisi untuk produk mana pun. Silakan mampir ke Data Management untuk mengisinya ya."
+utils\assistant.py:334: has_modal_count = sum(1 for p in df['nama_produk'].unique() if prices.get(p, {}).get("harga_modal", 0) > 0)
+utils\assistant.py:335: unpriced = [p for p in df['nama_produk'].unique() if prices.get(p, {}).get("harga_modal", 0) == 0]
+utils\assistant.py:340: resp = f"Keuntungan kotor Anda (omset dikurangi biaya bahan) {periode} adalah Rp {int(profit):,.0f}.\n\n".replace(",", ".")
+utils\assistant.py:343: resp += f"Nah, setelah dipotong biaya operasional, keuntungan bersih Anda diperkirakan menjadi Rp {int(net_profit):,.0f}.\n\n".replace(",", ".")
+utils\assistant.py:350: resp += f" Produk yang harga modalnya masih kosong (seperti {unpriced_list}) belum dihitung keuntungannya."
+utils\assistant.py:356: return "Halo! Saya Asisten AI SmartBiz Anda. Saya bisa bantu cek omset, produk terlaris, barang apa yang perlu direstok, sampai memperkirakan penjualan minggu depan. Ada yang ingin ditanyakan?"
+utils\assistant.py:362: "- 'Berapa total omset saya?'\n"
+utils\recommendations.py:66: hj = prod_data.get("harga_jual") or 0
+utils\recommendations.py:67: hm = prod_data.get("harga_modal") or 0
+utils\recommendations.py:109: alasan = f"Untung per porsi {prod} terbilang tipis (cuma sekitar {margin_pct:.0f}% dari harga jual)."
+utils\recommendations.py:122: "alasan": f"{prod} lagi laris (naik sekitar {trend_pct:.0f}%) dan untung per porsinya juga lumayan bagus (sekitar {margin_pct:.0f}% dari harga jual).",

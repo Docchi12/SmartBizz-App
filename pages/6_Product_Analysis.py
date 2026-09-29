@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from utils.forecasting import generate_dummy_forecast
 
 try:
     df_sales_raw = st.session_state.get("uploaded_sales_data")
@@ -10,79 +11,71 @@ try:
             st.switch_page(st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:"))
         st.stop()
         
-    prices_dict = st.session_state.get("product_prices", {})
-    
     st.markdown("<h2 style='margin-bottom:0.1rem;'>Analisis Produk</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Rincian performa setiap produk berdasarkan volume penjualan, omset, dan keuntungan per porsi.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Rincian performa setiap produk berdasarkan volume penjualan dan tren permintaan.</p>", unsafe_allow_html=True)
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     
     df = df_sales_raw.copy()
+    if not pd.api.types.is_datetime64_any_dtype(df['tanggal']):
+        df['tanggal'] = pd.to_datetime(df['tanggal'], format='mixed', dayfirst=True, errors='coerce')
+    df = df.dropna(subset=['tanggal'])
     
     # Hitung total volume per produk
     df_prod = df.groupby("nama_produk")["jumlah_terjual"].sum().reset_index()
     
-    has_any_jual = False
-    has_any_modal = False
+    total_jual_all = df_prod.loc[df_prod["jumlah_terjual"] > 0, "jumlah_terjual"].sum()
+    df_prod["kontribusi_pct"] = df_prod.apply(lambda row: (row["jumlah_terjual"] / total_jual_all * 100) if (total_jual_all > 0 and row["jumlah_terjual"] > 0) else 0, axis=1)
     
-    # Tambahkan kolom harga
-    df_prod["harga_jual"] = df_prod["nama_produk"].apply(lambda x: prices_dict.get(x, {}).get("harga_jual") or 0)
-    df_prod["harga_modal"] = df_prod["nama_produk"].apply(lambda x: prices_dict.get(x, {}).get("harga_modal") or 0)
+    # Hitung tren demand per produk
+    df_daily = df.groupby(['tanggal', 'nama_produk'])['jumlah_terjual'].sum().reset_index()
     
-    if (df_prod["harga_jual"] > 0).any():
-        has_any_jual = True
-    if (df_prod["harga_modal"] > 0).any():
-        has_any_modal = True
-        
-    # Hitung metrik
-    df_prod["omset"] = df_prod["jumlah_terjual"] * df_prod["harga_jual"]
+    tren_list = []
+    for prod in df_prod['nama_produk']:
+        df_p = df_daily[df_daily['nama_produk'] == prod].sort_values('tanggal')
+        if len(df_p) > 0:
+            recent_actual = df_p['jumlah_terjual'].tail(7).mean()
+            df_pred = generate_dummy_forecast(df_p, horizon_days=7)
+            avg_pred = df_pred['prediksi'].mean() if not df_pred.empty else recent_actual
+            if recent_actual > 0:
+                trend_pct = ((avg_pred - recent_actual) / recent_actual) * 100
+            else:
+                trend_pct = 0
+            tren_list.append(trend_pct)
+        else:
+            tren_list.append(0)
+            
+    df_prod["tren_pct"] = tren_list
     
-    total_omset_all = df_prod.loc[df_prod["omset"] > 0, "omset"].sum()
-    df_prod["omset_pct"] = df_prod.apply(lambda row: (row["omset"] / total_omset_all * 100) if (total_omset_all > 0 and row["omset"] > 0) else 0, axis=1)
-    
-    df_prod["untung_per_porsi"] = df_prod["harga_jual"] - df_prod["harga_modal"]
-    # Hanya hitung kontribusi untung jika harga_modal > 0 (karena jika 0 berarti tidak tahu, bukan gratis/100% untung)
-    df_prod["kontribusi_untung"] = df_prod.apply(lambda row: (row["harga_jual"] - row["harga_modal"]) * row["jumlah_terjual"] if row["harga_modal"] > 0 else 0, axis=1)
-    
-    total_untung_all = df_prod.loc[df_prod["kontribusi_untung"] > 0, "kontribusi_untung"].sum()
-    df_prod["untung_pct"] = df_prod.apply(lambda row: (row["kontribusi_untung"] / total_untung_all * 100) if (total_untung_all > 0 and row["kontribusi_untung"] > 0) else 0, axis=1)
-
     # 1. HIGHLIGHT CARDS
-    # TODO: BE - Teks kartu bisa disesuaikan dengan kebutuhan masa depan jika definisi "terlaris/terbesar" berubah (misalnya dibobot profit)
     c1, c2 = st.columns(2)
     
     with c1:
-        if has_any_jual:
-            # Penyumbang Omset Terbesar
-            top_omset_row = df_prod.loc[df_prod['omset'].idxmax()]
-            st.metric(
-                label="Penyumbang Omset Terbesar", 
-                value=top_omset_row['nama_produk'],
-                delta=f"{top_omset_row['omset_pct']:.0f}% dari total omset",
-                delta_color="off"
-            )
-        else:
-            # Produk Terlaris (Volume)
-            top_vol_row = df_prod.loc[df_prod['jumlah_terjual'].idxmax()]
-            st.metric(
-                label="Produk Terlaris", 
-                value=top_vol_row['nama_produk'],
-                delta=f"{top_vol_row['jumlah_terjual']:,} porsi terjual",
-                delta_color="off"
-            )
+        # Produk Terlaris (Volume)
+        top_vol_row = df_prod.loc[df_prod['jumlah_terjual'].idxmax()]
+        st.metric(
+            label="Produk Terlaris", 
+            value=top_vol_row['nama_produk'],
+            delta=f"{top_vol_row['jumlah_terjual']:,} porsi terjual",
+            delta_color="off"
+        )
             
-    if has_any_modal:
-        with c2:
-            # Untung per Porsi Tertinggi
-            # Filter hanya yang punya harga modal
-            df_modal = df_prod[df_prod['harga_modal'] > 0]
-            if not df_modal.empty:
-                top_margin_row = df_modal.loc[df_modal['untung_per_porsi'].idxmax()]
-                st.metric(
-                    label="Untung per Porsi Tertinggi",
-                    value=top_margin_row['nama_produk'],
-                    delta=f"Rp {top_margin_row['untung_per_porsi']:,}",
-                    delta_color="off"
-                )
+    with c2:
+        # Tren Kenaikan Tertinggi
+        top_trend_row = df_prod.loc[df_prod['tren_pct'].idxmax()]
+        trend_val = top_trend_row['tren_pct']
+        if trend_val > 0:
+            delta_str = f"Naik {trend_val:.1f}%"
+        elif trend_val < 0:
+            delta_str = f"Turun {abs(trend_val):.1f}%"
+        else:
+            delta_str = "Stabil"
+            
+        st.metric(
+            label="Tren Kenaikan Tertinggi",
+            value=top_trend_row['nama_produk'],
+            delta=delta_str,
+            delta_color="normal"
+        )
     
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     
@@ -93,33 +86,26 @@ try:
     render_table_interactive_tip()
     
     # Format untuk tampilan
-    df_display = df_prod.copy()
-    
-    # Default sorting
-    if has_any_jual:
-        df_display = df_display.sort_values("omset", ascending=False)
-    else:
-        df_display = df_display.sort_values("jumlah_terjual", ascending=False)
+    df_display = df_prod.sort_values("jumlah_terjual", ascending=False)
         
     df_final = pd.DataFrame()
     df_final["Nama Produk"] = df_display["nama_produk"]
     df_final["Total Terjual"] = df_display["jumlah_terjual"]
+    df_final["Kontribusi Penjualan (%)"] = df_display["kontribusi_pct"]
+    df_final["Tren (naik/turun %)"] = df_display["tren_pct"]
     
-    df_final["Kontribusi Omset (Rp)"] = df_display.apply(lambda r: r['omset'] if r['harga_jual'] > 0 else None, axis=1)
-    df_final["Kontribusi Omset (%)"] = df_display.apply(lambda r: r['omset_pct'] if r['harga_jual'] > 0 else None, axis=1)
-    
-    df_final["Untung per Porsi (Rp)"] = df_display.apply(lambda r: r['untung_per_porsi'] if r['harga_modal'] > 0 else None, axis=1)
-    df_final["Kontribusi Untung (Rp)"] = df_display.apply(lambda r: r['kontribusi_untung'] if r['harga_modal'] > 0 else None, axis=1)
-    df_final["Kontribusi Untung (%)"] = df_display.apply(lambda r: r['untung_pct'] if r['harga_modal'] > 0 else None, axis=1)
-    
-    # Format menggunakan Pandas Styler agar tampilan string (dengan separator titik) namun sorting tetap numerik
+    def format_tren(x):
+        if x > 0:
+            return f"📈 Naik {x:.1f}%"
+        elif x < 0:
+            return f"📉 Turun {abs(x):.1f}%"
+        else:
+            return "➖ Stabil"
+
     styled_df = df_final.style.format({
         "Total Terjual": lambda x: f"{int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
-        "Kontribusi Omset (Rp)": lambda x: f"Rp {int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
-        "Kontribusi Omset (%)": lambda x: f"{x:.1f}%" if pd.notna(x) else "-",
-        "Untung per Porsi (Rp)": lambda x: f"Rp {int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
-        "Kontribusi Untung (Rp)": lambda x: f"Rp {int(x):,.0f}".replace(",", ".") if pd.notna(x) else "-",
-        "Kontribusi Untung (%)": lambda x: f"{x:.1f}%" if pd.notna(x) else "-",
+        "Kontribusi Penjualan (%)": lambda x: f"{x:.1f}%" if pd.notna(x) else "-",
+        "Tren (naik/turun %)": format_tren
     })
     
     st.dataframe(
@@ -133,43 +119,39 @@ try:
         retur_summary = retur_rows.groupby("nama_produk")["jumlah_terjual"].sum().reset_index()
         retur_texts = [f"{abs(r['jumlah_terjual'])} unit pada {r['nama_produk']}" for _, r in retur_summary.iterrows()]
         retur_str = ", ".join(retur_texts)
-        st.markdown(f"<p style='font-size:0.8rem; color:#64748B; margin-top:0.5rem;'>*Catatan: {retur_str} (retur) tidak dihitung dalam persentase kontribusi produk lain, namun tetap mengurangi Total Terjual dan omset produk tersebut.</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:0.8rem; color:#64748B; margin-top:0.5rem;'>*Catatan: {retur_str} (retur) tidak dihitung dalam persentase kontribusi produk lain, namun tetap mengurangi Total Terjual produk tersebut.</p>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     
-    # 3. CHART PERBANDINGAN OMSET
-    st.markdown("<h5>Perbandingan Kontribusi Omset</h5>", unsafe_allow_html=True)
+    # 3. CHART PERBANDINGAN VOLUME PENJUALAN
+    st.markdown("<h5>Distribusi Penjualan Produk</h5>", unsafe_allow_html=True)
     
-    if has_any_jual:
-        # TODO: BE - Gunakan template chart yang konsisten dengan halaman lain
-        df_chart = df_prod[df_prod["omset"] > 0].sort_values("omset", ascending=True)
-        if not df_chart.empty:
-            fig = px.bar(
-                df_chart, 
-                x="omset", 
-                y="nama_produk", 
-                orientation='h',
-                text_auto='.2s',
-                title="",
-                labels={"omset": "Omset (Rp)", "nama_produk": "Produk"}
-            )
-            fig.update_traces(marker_color='#3B82F6', textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
-            fig.update_layout(
-                margin=dict(l=0, r=0, t=10, b=0),
-                height=max(300, len(df_chart) * 40),
-                xaxis=dict(showgrid=True, gridcolor='#E2E8F0'),
-                yaxis=dict(showgrid=False),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-            )
-            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-        else:
-            st.info("Seluruh produk saat ini memiliki harga jual 0 sehingga tidak ada omset yang bisa dibandingkan.")
+    df_chart = df_prod[df_prod["jumlah_terjual"] > 0].sort_values("jumlah_terjual", ascending=True)
+    if not df_chart.empty:
+        fig = px.bar(
+            df_chart, 
+            x="jumlah_terjual", 
+            y="nama_produk", 
+            orientation='h',
+            text_auto='.2s',
+            title="",
+            labels={"jumlah_terjual": "Total Terjual (Unit)", "nama_produk": "Produk"}
+        )
+        fig.update_traces(marker_color='#3B82F6', textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=10, b=0),
+            height=max(300, len(df_chart) * 40),
+            xaxis=dict(showgrid=True, gridcolor='#E2E8F0'),
+            yaxis=dict(showgrid=False),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+        )
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
     else:
-        st.info("Isi harga jual produk di halaman Data Management untuk melihat perbandingan kontribusi omset di sini.")
+        st.info("Belum ada data penjualan positif untuk ditampilkan.")
         
 except Exception as e:
-    st.error("Terjadi masalah saat memproses data Anda. Silakan periksa kembali data di halaman Data Management, atau upload ulang jika perlu.")
+    st.error(f"Terjadi masalah saat memproses data Anda. Silakan periksa kembali data di halaman Data Management. Pesan error: {e}")
     if st.button("Ke Halaman Data Management", type="primary", key="err_btn_product_analysis"):
         st.switch_page(st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:"))
     st.stop()

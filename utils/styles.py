@@ -86,10 +86,10 @@ button[data-testid="collapsedControl"] {
 }
 
 /* ── Main content area ── */
-.main .block-container {
+div[data-testid="stMainBlockContainer"] {
+    padding-top: 1rem !important;
     padding-left:  clamp(1rem, 3vw, 3rem);
     padding-right: clamp(1rem, 3vw, 3rem);
-    padding-top: 1.5rem;
     max-width: 100%;
 }
 

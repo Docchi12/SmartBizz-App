@@ -1,8 +1,8 @@
 [theme]
-primaryColor        = "#1D4ED8"   # Biru tua — kepercayaan, teknologi
+primaryColor        = "#37633D"   # Hijau tua — WARNA UTAMA/PRIMARY
 backgroundColor     = "#FFFFFF"
-secondaryBackgroundColor = "#F1F5F9"  # Abu biru sangat muda
-textColor           = "#0F172A"   # Near-black, bukan hitam keras
+secondaryBackgroundColor = "#A9C9AD"  # Sage muda
+textColor           = "#0F172A"   # Near-black
 font                = "sans serif"
 
 [server]

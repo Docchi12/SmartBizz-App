@@ -22,7 +22,11 @@ st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
 # ── Pengecekan Data (Empty State) ─────────────────────────────────────────────
 df_sales = st.session_state.get("uploaded_sales_data")
 if df_sales is None or len(df_sales) == 0:
-    st.info("Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management.")
+    st.markdown(
+        "<div style='background-color:#E6F4EA; border:1px solid #A1FCAB; border-radius:8px; padding:1rem; margin-bottom:1rem; color:#123316; font-size:0.9rem;'>"
+        "&#9432; Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management."
+        "</div>", unsafe_allow_html=True
+    )
     if st.button("Ke Halaman Data Management", type="primary"):
         # Menggunakan st.Page object seperti konvensi migrasi
         page_dm = st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:")
@@ -90,8 +94,8 @@ if not df_prod.empty:
         y=df_prod['jumlah_terjual'],
         mode='lines+markers',
         name='Aktual',
-        line=dict(color="#1D4ED8", width=2.5),
-        marker=dict(size=5, color="#1D4ED8"),
+        line=dict(color="#37633D", width=2.5),
+        marker=dict(size=5, color="#37633D"),
         hovertemplate="%{x|%d %b %Y}<br>Aktual: %{y} unit<extra></extra>",
     ))
     
@@ -105,8 +109,8 @@ if not df_prod.empty:
         y=concat_y,
         mode='lines+markers',
         name='Prediksi (Estimasi AI)',
-        line=dict(color="#94A3B8", width=2.5, dash='dash'),
-        marker=dict(size=5, color="#94A3B8"),
+        line=dict(color="#729677", width=2.5, dash='dash'),
+        marker=dict(size=5, color="#729677"),
         hovertemplate="%{x|%d %b %Y}<br>Prediksi: %{y} unit<extra></extra>",
     ))
     
@@ -117,12 +121,12 @@ if not df_prod.empty:
         height=350,
         xaxis=dict(
             showgrid=False,
-            tickfont=dict(family="Inter", size=11, color="#64748B"),
+            tickfont=dict(family="Inter", size=11, color="#729677"),
         ),
         yaxis=dict(
             showgrid=True,
-            gridcolor="#F1F5F9",
-            tickfont=dict(family="Inter", size=11, color="#64748B"),
+            gridcolor="#A9C9AD",
+            tickfont=dict(family="Inter", size=11, color="#729677"),
             title=None,
         ),
         legend=dict(

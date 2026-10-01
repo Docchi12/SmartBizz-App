@@ -47,10 +47,11 @@ st.markdown(
         font-size: 0.88rem;
         padding: 0.5rem 0.75rem;
         color: #0F172A;
+        background-color: #FFFFFF !important;
     }
     .stTextInput > div > div > input:focus {
-        border-color: #1D4ED8 !important;
-        box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.12) !important;
+        border-color: #37633D !important;
+        box-shadow: 0 0 0 2px rgba(55, 99, 61, 0.12) !important;
         outline: none;
     }
     .stTextInput label {
@@ -62,11 +63,12 @@ st.markdown(
     /* ── Tombol aksi utama (Masuk / Daftar): full width, primary color ── */
     .stButton > button[kind="secondaryFormSubmit"],
     .stButton > button[kind="primary"],
-    .sb-action-btn .stButton > button {
+    .sb-action-btn .stButton > button,
+    [data-testid="stFormSubmitButton"] > button {
         width: 100%;
-        background-color: #1D4ED8;
+        background-color: #37633D !important;
         color: #FFFFFF !important;
-        border: none;
+        border: none !important;
         border-radius: 6px;
         font-weight: 600;
         font-size: 0.9rem;
@@ -74,11 +76,18 @@ st.markdown(
         margin-top: 0.25rem;
         transition: background-color 0.15s ease;
     }
+    .stButton > button[kind="secondaryFormSubmit"]:hover,
+    .stButton > button[kind="primary"]:hover,
+    .sb-action-btn .stButton > button:hover,
+    [data-testid="stFormSubmitButton"] > button:hover {
+        background-color: #A9C9AD !important;
+        color: #123316 !important;
+    }
 
     /* Fallback: semua button di dalam container ── */
     [data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
         width: 100%;
-        background-color: #1D4ED8;
+        background-color: #37633D;
         color: #FFFFFF !important;
         border: none;
         border-radius: 6px;
@@ -88,10 +97,12 @@ st.markdown(
         transition: background-color 0.15s ease;
     }
     [data-testid="stVerticalBlockBorderWrapper"] .stButton > button:hover {
-        background-color: #1E40AF !important;
+        background-color: #A9C9AD !important;
+        color: #123316 !important;
     }
     [data-testid="stVerticalBlockBorderWrapper"] .stButton > button:active {
-        background-color: #1E3A8A !important;
+        background-color: #123316 !important;
+        color: #FFFFFF !important;
     }
 
     /* ── Tombol link toggle mode — tampak seperti teks link ── */
@@ -100,7 +111,7 @@ st.markdown(
     .sb-link-btn .stButton > button {
         background: none !important;
         border: none !important;
-        color: #1D4ED8 !important;
+        color: #37633D !important;
         font-size: 0.82rem !important;
         font-weight: 500 !important;
         padding: 0.1rem 0 !important;
@@ -115,7 +126,7 @@ st.markdown(
     .sb-link-btn > div > .stButton > button:hover,
     .sb-link-btn .stButton > button:hover {
         background: none !important;
-        color: #1E40AF !important;
+        color: #123316 !important;
     }
 
     /* ── Alert ── */
@@ -338,7 +349,7 @@ if st.session_state.auth_mode == "login":
             unsafe_allow_html=True,
         )
 
-        login_clicked = st.button("Masuk", use_container_width=True, key="btn_login")
+        login_clicked = st.button("Masuk", type="primary", use_container_width=True, key="btn_login")
 
         # ── Logika login ──────────────────────────────────────────────────────
         if login_clicked:
@@ -401,7 +412,7 @@ else:
 
         st.markdown("<div style='height:0.4rem;'></div>", unsafe_allow_html=True)
 
-        daftar_clicked = st.button("Daftar", use_container_width=True, key="btn_register")
+        daftar_clicked = st.button("Daftar", type="primary", use_container_width=True, key="btn_register")
 
         # ── Logika Register ───────────────────────────────────────────────────
         if daftar_clicked:

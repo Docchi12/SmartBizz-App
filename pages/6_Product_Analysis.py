@@ -6,13 +6,17 @@ from utils.forecasting import generate_dummy_forecast
 try:
     df_sales_raw = st.session_state.get("uploaded_sales_data")
     if df_sales_raw is None or len(df_sales_raw) == 0:
-        st.info("Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management.")
+        st.markdown(
+            "<div style='background-color:#E6F4EA; border:1px solid #A1FCAB; border-radius:8px; padding:1rem; margin-bottom:1rem; color:#123316; font-size:0.9rem;'>"
+            "&#9432; Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management."
+            "</div>", unsafe_allow_html=True
+        )
         if st.button("Ke Halaman Data Management", type="primary", key="pa_to_dm"):
             st.switch_page(st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:"))
         st.stop()
         
     st.markdown("<h2 style='margin-bottom:0.1rem;'>Analisis Produk</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.85rem; color:#64748B;'>Rincian performa setiap produk berdasarkan volume penjualan dan tren permintaan.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.85rem; color:#729677;'>Rincian performa setiap produk berdasarkan volume penjualan dan tren permintaan.</p>", unsafe_allow_html=True)
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     
     df = df_sales_raw.copy()
@@ -119,7 +123,7 @@ try:
         retur_summary = retur_rows.groupby("nama_produk")["jumlah_terjual"].sum().reset_index()
         retur_texts = [f"{abs(r['jumlah_terjual'])} unit pada {r['nama_produk']}" for _, r in retur_summary.iterrows()]
         retur_str = ", ".join(retur_texts)
-        st.markdown(f"<p style='font-size:0.8rem; color:#64748B; margin-top:0.5rem;'>*Catatan: {retur_str} (retur) tidak dihitung dalam persentase kontribusi produk lain, namun tetap mengurangi Total Terjual produk tersebut.</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:0.8rem; color:#729677; margin-top:0.5rem;'>*Catatan: {retur_str} (retur) tidak dihitung dalam persentase kontribusi produk lain, namun tetap mengurangi Total Terjual produk tersebut.</p>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     
@@ -137,11 +141,11 @@ try:
             title="",
             labels={"jumlah_terjual": "Total Terjual (Unit)", "nama_produk": "Produk"}
         )
-        fig.update_traces(marker_color='#3B82F6', textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
+        fig.update_traces(marker_color='#37633D', textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
         fig.update_layout(
             margin=dict(l=0, r=0, t=10, b=0),
             height=max(300, len(df_chart) * 40),
-            xaxis=dict(showgrid=True, gridcolor='#E2E8F0'),
+            xaxis=dict(showgrid=True, gridcolor='#A9C9AD'),
             yaxis=dict(showgrid=False),
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',

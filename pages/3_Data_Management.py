@@ -21,7 +21,7 @@ if "uploaded_sales_data" not in st.session_state:
 # ── Header Halaman ────────────────────────────────────────────────────────────
 st.markdown(
     "<h2 style='margin-bottom:0.5rem;'>Data Management</h2>"
-    "<p style='font-size:0.9rem; color:#64748B; margin-top:0;'>"
+    "<p style='font-size:0.9rem; color:#729677; margin-top:0;'>"
     "Unggah dan kelola data penjualan bisnis Anda untuk dianalisis oleh AI."
     "</p>",
     unsafe_allow_html=True,
@@ -101,7 +101,7 @@ def _get_template_csv_bytes() -> bytes:
 with st.container(border=True):
     st.markdown("<h4>Unggah Data Penjualan</h4>", unsafe_allow_html=True)
     st.markdown(
-        "<p style='font-size:0.85rem; color:#64748B; margin-bottom:1rem;'>"
+        "<p style='font-size:0.85rem; color:#729677; margin-bottom:1rem;'>"
         "File CSV Anda harus memiliki 3 kolom: <b>Tanggal, Nama Produk, Jumlah Terjual</b>. "
         "Kapitalisasi dan spasi pada nama kolom tidak perlu persis sama."
         "</p>",
@@ -138,7 +138,7 @@ with st.container(border=True):
         # ── Preview: rename kolom untuk tampilan, index disembunyikan ─────
         st.markdown("<h5>Preview Data</h5>", unsafe_allow_html=True)
         st.markdown(
-            f"<p style='font-size:0.8rem; color:#64748B; margin-top:-0.5rem;'>"
+            f"<p style='font-size:0.8rem; color:#729677; margin-top:-0.5rem;'>"
             f"Menampilkan {min(10, len(df))} dari total {len(df)} baris data.</p>",
             unsafe_allow_html=True
         )
@@ -274,7 +274,7 @@ with st.container(border=True):
                 "<div style='font-size:2.5rem; margin-bottom:0.75rem;'>&#128193;</div>"
                 "<p style='font-size:0.95rem; font-weight:600; color:#0F172A; margin:0 0 0.3rem;'>"
                 "Belum ada data penjualan.</p>"
-                "<p style='font-size:0.85rem; color:#64748B; margin:0;'>"
+                "<p style='font-size:0.85rem; color:#729677; margin:0;'>"
                 "Upload file CSV untuk mulai menganalisis dan membuat perkiraan penjualan."
                 "</p></div>",
                 unsafe_allow_html=True,
@@ -286,7 +286,7 @@ with st.container(border=True):
                 st.markdown(
                     "<p style='font-size:0.85rem; font-weight:600; color:#0F172A; margin:0 0 0.4rem;'>"
                     "Format kolom yang dibutuhkan</p>"
-                    "<p style='font-size:0.8rem; color:#64748B; margin:0 0 0.75rem;'>"
+                    "<p style='font-size:0.8rem; color:#729677; margin:0 0 0.75rem;'>"
                     "File CSV Anda harus memiliki 3 kolom berikut. "
                     "Kapitalisasi dan spasi tidak perlu persis sama — sistem akan menyesuaikan otomatis:</p>",
                     unsafe_allow_html=True,
@@ -302,7 +302,7 @@ with st.container(border=True):
                     hide_index=True,
                 )
                 st.markdown(
-                    "<p style='font-size:0.78rem; color:#94A3B8; margin:0.5rem 0 0;'>"
+                    "<p style='font-size:0.78rem; color:#729677; margin:0.5rem 0 0;'>"
                     "Kolom tanggal: format YYYY-MM-DD atau DD/MM/YYYY. "
                     "Kolom jumlah_terjual: angka bulat tanpa satuan."
                     "</p>",

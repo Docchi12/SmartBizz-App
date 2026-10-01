@@ -36,7 +36,7 @@ def render_sidebar() -> None:
                 unsafe_allow_html=True,
             )
             st.divider()
-            if st.button("Logout", use_container_width=True, key="sidebar_logout"):
+            if st.button("Logout", type="primary", use_container_width=True, key="sidebar_logout"):
                 from utils.auth import logout_user
                 logout_user()
                 st.rerun()
@@ -53,7 +53,7 @@ def render_table_interactive_tip() -> None:
     user bahwa header kolom bisa di-klik untuk fitur interaktif (sort/stats).
     """
     st.markdown(
-        "<p style='font-size:0.8rem; color:#1D4ED8; font-weight:500; margin-top:-0.5rem; margin-bottom:0.75rem;'>"
+        "<p style='font-size:0.8rem; color:#37633D; font-weight:500; margin-top:-0.5rem; margin-bottom:0.75rem;'>"
         "💡 Tip: Klik ikon pada judul kolom untuk mengurutkan atau melihat statistik data."
         "</p>",
         unsafe_allow_html=True

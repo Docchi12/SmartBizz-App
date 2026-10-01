@@ -10,7 +10,11 @@ if not st.session_state.get("logged_in", False):
 try:
     df_sales_raw = st.session_state.get("uploaded_sales_data")
     if df_sales_raw is None or len(df_sales_raw) == 0:
-        st.info("Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management.")
+        st.markdown(
+            "<div style='background-color:#E6F4EA; border:1px solid #A1FCAB; border-radius:8px; padding:1rem; margin-bottom:1rem; color:#123316; font-size:0.9rem;'>"
+            "&#9432; Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management."
+            "</div>", unsafe_allow_html=True
+        )
         if st.button("Ke Halaman Data Management", type="primary", key="rec_to_dm"):
             st.switch_page(st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:"))
         st.stop()

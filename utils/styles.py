@@ -6,11 +6,11 @@
 # tepat setelah st.set_page_config().
 #
 # Design tokens:
-#   Primary   : #1D4ED8  (biru tua)
-#   Secondary : #10B981  (hijau aksen)
-#   Surface   : #F1F5F9  (abu biru)
+#   Primary   : #37633D  (hijau tua)
+#   Secondary : #A1FCAB  (mint terang - aksen) / #A9C9AD (sage muda)
+#   Sidebar   : #123316  (hijau sangat gelap)
 #   Text      : #0F172A  (near-black)
-#   Border    : #E2E8F0
+#   Border    : #A9C9AD  (sage muda)
 # -------------------------------------------------------
 
 import streamlit as st
@@ -31,18 +31,18 @@ h1 { font-size: clamp(1.25rem, 3vw, 1.75rem); font-weight: 700;
 h2 { font-size: clamp(1rem, 2vw, 1.25rem);    font-weight: 600; color: #1E293B; }
 h3 { font-size: 1rem;                          font-weight: 600; color: #334155; }
 
-/* ── Sidebar: warna navy gelap — berlaku di SEMUA halaman ── */
+/* ── Sidebar: warna hijau sangat gelap — berlaku di SEMUA halaman ── */
 section[data-testid="stSidebar"] {
-    background-color: #0F172A !important;
+    background-color: #123316 !important;
 }
 section[data-testid="stSidebar"] > div:first-child {
-    background-color: #0F172A !important;
+    background-color: #123316 !important;
 }
 section[data-testid="stSidebar"] * {
-    color: #E2E8F0 !important;
+    color: #FFFFFF !important;
 }
 section[data-testid="stSidebar"] .stButton > button {
-    background-color: #1D4ED8 !important;
+    background-color: #37633D !important;
     color: #FFFFFF !important;
     border: none !important;
     border-radius: 6px !important;
@@ -50,7 +50,8 @@ section[data-testid="stSidebar"] .stButton > button {
     width: 100% !important;
 }
 section[data-testid="stSidebar"] .stButton > button:hover {
-    background-color: #1E40AF !important;
+    background-color: #A9C9AD !important;
+    color: #123316 !important;
 }
 
 /* ── Tombol collapse sidebar — selalu terlihat ── */
@@ -92,10 +93,84 @@ button[data-testid="collapsedControl"] {
     max-width: 100%;
 }
 
+/* ── Input fields (Global) ── */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stDateInput > div > div > input,
+.stTimeInput > div > div > input,
+.stTextArea > div > div > textarea {
+    border-radius: 6px !important;
+    border: 1px solid #CBD5E1 !important;
+    font-size: 0.88rem !important;
+    padding: 0.5rem 0.75rem !important;
+    color: #0F172A !important;
+    background-color: #FFFFFF !important;
+}
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus,
+.stDateInput > div > div > input:focus,
+.stTimeInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: #37633D !important;
+    box-shadow: 0 0 0 2px rgba(55, 99, 61, 0.12) !important;
+    outline: none !important;
+}
+.stTextInput label,
+.stNumberInput label,
+.stSelectbox label,
+.stMultiSelect label,
+.stDateInput label,
+.stTimeInput label,
+.stTextArea label,
+.stFileUploader label {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+}
+
+/* ── Selectbox & MultiSelect ── */
+.stSelectbox div[data-baseweb="select"] > div,
+.stMultiSelect div[data-baseweb="select"] > div {
+    background-color: #FFFFFF !important;
+    border-radius: 6px !important;
+    border: 1px solid #CBD5E1 !important;
+}
+.stSelectbox div[data-baseweb="select"] > div:focus-within,
+.stMultiSelect div[data-baseweb="select"] > div:focus-within {
+    border-color: #37633D !important;
+    box-shadow: 0 0 0 2px rgba(55, 99, 61, 0.12) !important;
+}
+
+/* ── Chat Input ── */
+.stChatInputContainer {
+    background-color: #FFFFFF !important;
+    border-radius: 6px !important;
+    border: 1px solid #CBD5E1 !important;
+}
+.stChatInputContainer:focus-within {
+    border-color: #37633D !important;
+    box-shadow: 0 0 0 2px rgba(55, 99, 61, 0.12) !important;
+}
+.stChatInputContainer textarea {
+    color: #0F172A !important;
+    background-color: transparent !important;
+}
+
+/* ── File Uploader ── */
+[data-testid="stFileUploadDropzone"] {
+    background-color: #FFFFFF !important;
+    border: 1px dashed #CBD5E1 !important;
+    border-radius: 6px !important;
+}
+[data-testid="stFileUploadDropzone"]:hover {
+    border-color: #37633D !important;
+    background-color: #F8FAFC !important;
+}
+
 /* ── Card reusable ── */
 .sb-card {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
+    border: 1px solid #A9C9AD;
     border-radius: 10px;
     padding: 1.25rem 1.5rem;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
@@ -107,13 +182,13 @@ button[data-testid="collapsedControl"] {
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #64748B;
+    color: #729677;
     margin-bottom: 0.25rem;
 }
 .sb-card-value {
     font-size: clamp(1.25rem, 3vw, 1.5rem);
     font-weight: 700;
-    color: #1D4ED8;
+    color: #37633D;
 }
 
 /* ── Responsive grids ── */
@@ -138,7 +213,7 @@ button[data-testid="collapsedControl"] {
 }
 
 /* ── Divider ── */
-hr { border-color: #E2E8F0; margin: 1rem 0; }
+hr { border-color: #729677; margin: 1rem 0; }
 
 /* ── Alert ── */
 .stAlert { border-radius: 8px; }
@@ -152,7 +227,7 @@ hr { border-color: #E2E8F0; margin: 1rem 0; }
 [data-testid="stMetricValue"], [data-testid="stMetricValue"] > div, [data-testid="stMetricValue"] * {
     font-size: 1.4rem !important;
     font-weight: 700 !important;
-    color: #1D4ED8 !important;
+    color: #37633D !important;
     line-height: 1.2 !important;
 }
 [data-testid="stMetricLabel"], [data-testid="stMetricLabel"] > div, [data-testid="stMetricLabel"] * {
@@ -160,7 +235,7 @@ hr { border-color: #E2E8F0; margin: 1rem 0; }
     font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.04em !important;
-    color: #64748B !important;
+    color: #729677 !important;
 }
 [data-testid="stMetricDelta"] { display: none !important; }
 </style>

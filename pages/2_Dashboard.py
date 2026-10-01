@@ -18,7 +18,11 @@ from datetime import datetime, timedelta
 # ── Pengecekan Data (Empty State) ─────────────────────────────────────────────
 df_sales_raw = st.session_state.get("uploaded_sales_data")
 if df_sales_raw is None or len(df_sales_raw) == 0:
-    st.info("Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management.")
+    st.markdown(
+        "<div style='background-color:#E6F4EA; border:1px solid #A1FCAB; border-radius:8px; padding:1rem; margin-bottom:1rem; color:#123316; font-size:0.9rem;'>"
+        "&#9432; Anda belum mengupload data penjualan. Silakan upload data terlebih dahulu di halaman Data Management."
+        "</div>", unsafe_allow_html=True
+    )
     if st.button("Ke Halaman Data Management", type="primary", key="dash_to_dm"):
         st.switch_page(st.Page("pages/3_Data_Management.py", title="Data Management", icon=":material/upload_file:"))
     st.stop()
@@ -100,7 +104,7 @@ def _format_tanggal_id(dt: datetime) -> str:
 today_str = _format_tanggal_id(datetime.now())
 st.markdown(
     "<h2 style='margin-bottom:0.1rem;'>Dashboard</h2>"
-    f"<p style='font-size:0.82rem; color:#64748B; margin-top:0;'>{today_str}</p>",
+    f"<p style='font-size:0.82rem; color:#729677; margin-top:0;'>{today_str}</p>",
     unsafe_allow_html=True,
 )
 st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
@@ -110,7 +114,7 @@ st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
 summary = get_summary_data()
 
 risk_color_map = {
-    "Aman":      {"text": "#047857", "bg": "#D1FAE5"},
+    "Aman":      {"text": "#123316", "bg": "#A1FCAB"},
     "Perhatian": {"text": "#92400E", "bg": "#FEF3C7"},
     "Kritis":    {"text": "#991B1B", "bg": "#FEE2E2"},
 }
@@ -131,7 +135,7 @@ with col1:
         st.markdown(
             "<div class='sb-card-label'>Total Produk</div>"
             f"<div class='sb-card-value'>{summary['total_produk']}</div>"
-            "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Jumlah menu atau produk yang terdaftar.</div>",
+            "<div style='font-size:0.78rem; color:#729677; margin-top:0.5rem; line-height:1.5;'>Jumlah menu atau produk yang terdaftar.</div>",
             unsafe_allow_html=True,
         )
 
@@ -140,7 +144,7 @@ with col2:
         st.markdown(
             "<div class='sb-card-label'>Perkiraan Penjualan Hari Ini</div>"
             f"<div class='sb-card-value'>{summary['forecast_hari']} unit</div>"
-            "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Perkiraan total unit yang akan terjual hari ini.</div>",
+            "<div style='font-size:0.78rem; color:#729677; margin-top:0.5rem; line-height:1.5;'>Perkiraan total unit yang akan terjual hari ini.</div>",
             unsafe_allow_html=True,
         )
 
@@ -149,7 +153,7 @@ with col3:
         st.markdown(
             "<div class='sb-card-label'>Rekomendasi</div>"
             f"<div class='sb-card-value'>{summary['restock_count']}</div>"
-            "<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>Produk yang stoknya perlu segera ditambah.</div>",
+            "<div style='font-size:0.78rem; color:#729677; margin-top:0.5rem; line-height:1.5;'>Produk yang stoknya perlu segera ditambah.</div>",
             unsafe_allow_html=True,
         )
 
@@ -166,7 +170,7 @@ with col4:
             f"padding:0.2rem 0.75rem; border-radius:999px;'>"
             f"{summary['risk_status']}"
             f"</span></div>"
-            f"<div style='font-size:0.78rem; color:#64748B; margin-top:0.5rem; line-height:1.5;'>{risk_desc}</div>",
+            f"<div style='font-size:0.78rem; color:#729677; margin-top:0.5rem; line-height:1.5;'>{risk_desc}</div>",
             unsafe_allow_html=True,
         )
 
@@ -183,8 +187,8 @@ fig_sales.add_trace(go.Scatter(
     y=df_sales["penjualan"],
     mode="lines+markers",
     name="Penjualan",
-    line=dict(color="#1D4ED8", width=2.5),
-    marker=dict(size=4, color="#1D4ED8"),
+    line=dict(color="#37633D", width=2.5),
+    marker=dict(size=4, color="#37633D"),
     hovertemplate="%{x|%d %b %Y}<br>%{y} unit<extra></extra>",
 ))
 
@@ -195,13 +199,13 @@ fig_sales.update_layout(
     height=300,
     xaxis=dict(
         showgrid=False,
-        tickfont=dict(family="Inter", size=11, color="#64748B"),
+        tickfont=dict(family="Inter", size=11, color="#729677"),
         tickformat="%d %b",
     ),
     yaxis=dict(
         showgrid=True,
-        gridcolor="#F1F5F9",
-        tickfont=dict(family="Inter", size=11, color="#64748B"),
+        gridcolor="#A9C9AD",
+        tickfont=dict(family="Inter", size=11, color="#729677"),
         title=None,
     ),
     legend=dict(
@@ -221,7 +225,7 @@ def get_sales_insight(df_trend: pd.DataFrame) -> str:
     return f"Penjualan Anda berada di rata-rata {avg_sales} unit per hari selama periode ini."
 
 st.markdown(
-    f"<p style='font-size:0.82rem; color:#64748B; margin-top:-0.25rem;'>"
+    f"<p style='font-size:0.82rem; color:#729677; margin-top:-0.25rem;'>"
     f"{get_sales_insight(df_sales)}"
     f"</p>",
     unsafe_allow_html=True,
@@ -241,8 +245,8 @@ fig_avf.add_trace(go.Scatter(
     y=df_avf["aktual"],
     mode="lines+markers",
     name="Aktual",
-    line=dict(color="#1D4ED8", width=2.5),
-    marker=dict(size=4, color="#1D4ED8"),
+    line=dict(color="#37633D", width=2.5),
+    marker=dict(size=4, color="#37633D"),
     hovertemplate="%{x|%d %b}<br>Aktual: %{y} unit<extra></extra>",
 ))
 fig_avf.add_trace(go.Scatter(
@@ -250,8 +254,8 @@ fig_avf.add_trace(go.Scatter(
     y=df_avf["forecast"],
     mode="lines+markers",
     name="Perkiraan",
-    line=dict(color="#94A3B8", width=2, dash="dot"),
-    marker=dict(size=4, color="#94A3B8"),
+    line=dict(color="#729677", width=2, dash="dot"),
+    marker=dict(size=4, color="#729677"),
     hovertemplate="%{x|%d %b}<br>Perkiraan: %{y} unit<extra></extra>",
 ))
 
@@ -262,13 +266,13 @@ fig_avf.update_layout(
     height=300,
     xaxis=dict(
         showgrid=False,
-        tickfont=dict(family="Inter", size=11, color="#64748B"),
+        tickfont=dict(family="Inter", size=11, color="#729677"),
         tickformat="%d %b",
     ),
     yaxis=dict(
         showgrid=True,
-        gridcolor="#F1F5F9",
-        tickfont=dict(family="Inter", size=11, color="#64748B"),
+        gridcolor="#A9C9AD",
+        tickfont=dict(family="Inter", size=11, color="#729677"),
         title=None,
     ),
     legend=dict(

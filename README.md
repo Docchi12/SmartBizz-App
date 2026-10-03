@@ -2,7 +2,7 @@
 
 Demand Forecasting & Business Assistant untuk UMKM Kuliner. Dibangun untuk kebutuhan Lomba USB 2026.
 
-SmartBizz AI membantu pemilik usaha kuliner skala kecil menengah membaca data penjualan mereka sendiri — mengunggah data, melihat tren, memperkirakan permintaan ke depan, dan mendapat rekomendasi aksi — tanpa perlu memahami istilah statistik atau akuntansi.
+SmartBizz AI membantu pemilik usaha kuliner skala kecil menengah membaca data penjualan mereka sendiri — mengunggah data, melihat tren, memperkirakan permintaan ke depan, dan mendapat rekomendasi stok — tanpa perlu memahami istilah statistik.
 
 ## Fitur
 
@@ -11,13 +11,13 @@ Aplikasi terdiri dari 8 halaman:
 | Halaman | Fungsi |
 |---|---|
 | **Login / Register** | Autentikasi pengguna, satu file dengan toggle antara masuk dan daftar |
-| **Dashboard** | Ringkasan bisnis: total produk, perkiraan penjualan hari ini, status risiko stok, estimasi omset & keuntungan, tren penjualan, grafik aktual vs perkiraan |
-| **Data Management** | Unggah data penjualan (CSV), validasi otomatis dengan pesan error ramah pengguna, isi harga jual & modal per produk, isi biaya operasional bulanan |
+| **Dashboard** | Ringkasan bisnis: total produk, perkiraan penjualan hari ini, rekomendasi, status risiko stok, tren penjualan, grafik aktual vs perkiraan |
+| **Data Management** | Unggah data penjualan (CSV), validasi otomatis dengan pesan error ramah pengguna, preview data |
 | **Forecast** | Perkiraan penjualan 7/14/30 hari ke depan per produk, grafik aktual vs prediksi, insight otomatis dalam Bahasa Indonesia |
-| **Rekomendasi** | Saran aksi otomatis per produk: Perlu Tambah Stok, Pantau/Kurangi Produksi, Tinjau Harga/Margin, Produk Andalan |
-| **Analisis Produk** | Ranking produk berdasarkan kontribusi omset & keuntungan, produk penyumbang terbesar, grafik perbandingan |
-| **Asisten AI** | Chat tanya-jawab seputar data penjualan, stok, dan keuntungan usaha (lihat catatan di bagian Status & Keterbatasan) |
-| **Settings** | Pengaturan akun dan preferensi aplikasi |
+| **Rekomendasi** | Saran aksi otomatis per produk berbasis perbandingan stok saat ini vs prediksi demand: Perlu Segera Ditambah atau Stok Aman |
+| **Analisis Produk** | Ranking produk berdasarkan volume penjualan, kontribusi penjualan (%), dan tren naik/turun |
+| **Asisten AI** | Chat tanya-jawab seputar penjualan, permintaan, dan stok usaha (lihat catatan di bagian Status & Keterbatasan) |
+| **Pengaturan** | Profil bisnis: nama usaha, kategori usaha, lokasi |
 
 ## Cara Menjalankan
 
@@ -64,19 +64,15 @@ Password : demo123
 
 1. Login, lalu buka halaman **Data Management**
 2. Unggah file CSV dengan 3 kolom: `Tanggal`, `Nama Produk`, `Jumlah Terjual` (nama kolom tidak harus persis sama, kapitalisasi dan spasi akan dinormalisasi otomatis)
-3. Isi harga jual (dan harga modal jika ingin melihat estimasi keuntungan) untuk tiap produk yang terdeteksi
-4. Opsional: isi biaya operasional bulanan untuk melihat estimasi keuntungan bersih
-5. Jelajahi halaman Dashboard, Forecast, Rekomendasi, Analisis Produk, dan Asisten AI — semuanya otomatis mengikuti data yang diunggah
+3. Jelajahi halaman Dashboard, Forecast, Rekomendasi, Analisis Produk, dan Asisten AI — semuanya otomatis mengikuti data yang diunggah
 
 ## Struktur Proyek
 
 ```
 SmartBizz-app/
 ├── app.py                      # Entry point, mendaftarkan semua halaman ke st.navigation()
-├── auth.py                     # Logic autentikasi
-├── layout.py                   # Sidebar & CSS global (apply_global_css, render_sidebar)
-├── styles.py                   # Definisi style/CSS
 ├── pages/
+│   ├── 1_Login.py
 │   ├── 2_Dashboard.py
 │   ├── 3_Data_Management.py
 │   ├── 4_Forecast.py
@@ -85,9 +81,11 @@ SmartBizz-app/
 │   ├── 7_AI_Assistant.py
 │   └── 8_Settings.py
 ├── utils/
+│   ├── auth.py                 # Logic autentikasi (init_session, login_user, register_user)
+│   ├── layout.py                # Sidebar & komponen layout bersama
+│   ├── styles.py                 # CSS global & tema warna (apply_global_css)
 │   ├── forecasting.py          # Logic dummy forecast (generate_dummy_forecast, generate_dummy_historical_forecast)
-│   ├── recommendations.py      # Logic kategori rekomendasi (get_product_recommendations)
-│   ├── analysis.py             # Logic ringkasan omset/keuntungan (get_pricing_summary) — dipakai Dashboard & Asisten AI
+│   ├── recommendations.py      # Logic rekomendasi stok vs demand (get_product_recommendations)
 │   └── assistant.py            # Logic jawaban chat (get_assistant_reply)
 └── requirements.txt
 ```
@@ -96,7 +94,7 @@ SmartBizz-app/
 
 Dua aturan yang dipegang konsisten di seluruh proyek ini:
 
-1. **Penanda kode sementara.** Setiap bagian yang masih memakai data atau logika dummy (bukan hasil model/backend sungguhan) ditandai komentar `# TODO: BE - <penjelasan>`, supaya mudah ditemukan saat integrasi backend.
+1. **Penanda kode sementara.** Setiap bagian yang masih memakai data atau logika dummy (bukan hasil model/backend sungguhan) ditandai komentar `# TODO: BACKEND - <penjelasan>`, supaya mudah ditemukan saat integrasi backend.
 2. **Pesan error ramah pengguna.** Karena pengguna aplikasi ini mengelola data lewat Excel (yang sering menghasilkan format tidak konsisten secara wajar, bukan kesalahan pengguna), setiap error yang berpotensi terlihat pengguna ditampilkan dalam bahasa manusia yang jelas — bukan traceback Python atau istilah teknis.
 
 ## Status & Keterbatasan (Catatan untuk Tim Backend)
@@ -104,10 +102,11 @@ Dua aturan yang dipegang konsisten di seluruh proyek ini:
 Seluruh data prediksi, rekomendasi, dan jawaban chat pada versi ini adalah **dummy**, dibangun untuk menunjukkan alur dan tampilan produk sebelum model/backend sesungguhnya terpasang. Titik-titik yang perlu diganti:
 
 - **`utils/forecasting.py`** — prediksi saat ini berbasis rolling average + variasi acak. Ganti dengan model sesungguhnya (moving average/regresi/Prophet sesuai rencana tim).
+- **`utils/recommendations.py`** — stok saat ini bersifat dummy/acak per produk, dibandingkan dengan hasil forecast untuk menentukan status "Perlu Tambah" atau "Stok Aman". Ganti sumber "stok saat ini" dengan data stok sungguhan dari database.
 - **`utils/assistant.py`** — jawaban saat ini berbasis pencocokan kata kunci sederhana, bukan LLM. Fungsi `get_assistant_reply()` adalah satu-satunya titik yang perlu diganti dengan pemanggilan LLM API; docstring di dalamnya menjelaskan kontrak input/output yang diharapkan.
-  - Keterbatasan yang sudah diketahui: pencocokan kata kunci bisa salah arah untuk kalimat yang mengandung kata dari beberapa kategori sekaligus (misalnya "stok yang perlu dikurangi" pernah salah tertangkap sebagai "perlu tambah stok"), dan pencocokan nama produk parsial bisa salah kena ungkapan sehari-hari (misalnya kata "manis" dalam "laris manis" pernah tertangkap sebagai nama produk "Es Teh Manis"). Ini adalah batas wajar dari pendekatan kata kunci, dan akan hilang dengan sendirinya begitu diganti LLM sungguhan.
-- **Penyimpanan data** — seluruh data (penjualan, harga produk, biaya operasional, riwayat chat) saat ini hanya berada di `st.session_state`, hilang saat sesi berakhir atau browser di-refresh. Perlu dipindahkan ke database (SQLite sesuai rencana tim).
-- Titik lain yang lebih spesifik ditandai langsung di kode dengan komentar `# TODO: BE`.
+  - Keterbatasan yang sudah diketahui: pencocokan kata kunci bisa salah arah untuk kalimat yang mengandung kata dari beberapa kategori sekaligus, dan pencocokan nama produk parsial bisa salah kena ungkapan sehari-hari. Ini adalah batas wajar dari pendekatan kata kunci, dan akan hilang dengan sendirinya begitu diganti LLM sungguhan.
+- **Penyimpanan data** — seluruh data (penjualan, riwayat chat, profil bisnis) saat ini hanya berada di `st.session_state`, hilang saat sesi berakhir atau browser di-refresh. Perlu dipindahkan ke database (SQLite sesuai rencana tim).
+- Titik lain yang lebih spesifik ditandai langsung di kode dengan komentar `# TODO: BACKEND`.
 
 ## Tim
 

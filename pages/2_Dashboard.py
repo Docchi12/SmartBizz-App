@@ -107,7 +107,7 @@ st.markdown(
     f"<p style='font-size:0.82rem; color:#729677; margin-top:0;'>{today_str}</p>",
     unsafe_allow_html=True,
 )
-st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:0.2rem;'></div>", unsafe_allow_html=True)
 
 
 # ── A. Business Summary ───────────────────────────────────────────────────────
@@ -174,138 +174,129 @@ with col4:
             unsafe_allow_html=True,
         )
 
-st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
+st.markdown("<div style='height:0.25rem;'></div>", unsafe_allow_html=True)
 
-# ── B. Chart: Sales Trend ─────────────────────────────────────────────────────
-st.markdown("<h3>Tren Penjualan (30 Hari Terakhir)</h3>", unsafe_allow_html=True)
+# ── B & C. Charts: Side-by-Side ───────────────────────────────────────────────
+col_chart1, col_chart2 = st.columns(2)
 
-df_sales = get_sales_trend_data()
+with col_chart1:
+    st.markdown("<h4 style='font-size:1rem; margin-bottom:0;'>Tren Penjualan (30 Hari)</h4>", unsafe_allow_html=True)
 
-fig_sales = go.Figure()
-fig_sales.add_trace(go.Scatter(
-    x=df_sales["tanggal"],
-    y=df_sales["penjualan"],
-    mode="lines+markers",
-    name="Penjualan",
-    line=dict(color="#37633D", width=2.5),
-    marker=dict(size=4, color="#37633D"),
-    hovertemplate="%{x|%d %b %Y}<br>%{y} unit<extra></extra>",
-))
+    df_sales = get_sales_trend_data()
 
-fig_sales.update_layout(
-    plot_bgcolor="#FFFFFF",
-    paper_bgcolor="#FFFFFF",
-    margin=dict(l=0, r=0, t=8, b=0),
-    height=300,
-    xaxis=dict(
-        showgrid=False,
-        tickfont=dict(family="Inter", size=11, color="#729677"),
-        tickformat="%d %b",
-    ),
-    yaxis=dict(
-        showgrid=True,
-        gridcolor="#A9C9AD",
-        tickfont=dict(family="Inter", size=11, color="#729677"),
-        title=None,
-    ),
-    legend=dict(
-        font=dict(family="Inter", size=11),
-        bgcolor="rgba(0,0,0,0)",
-    ),
-    hoverlabel=dict(font=dict(family="Inter", size=12)),
-)
+    fig_sales = go.Figure()
+    fig_sales.add_trace(go.Scatter(
+        x=df_sales["tanggal"],
+        y=df_sales["penjualan"],
+        mode="lines+markers",
+        name="Penjualan",
+        line=dict(color="#37633D", width=2.5),
+        marker=dict(size=4, color="#37633D"),
+        hovertemplate="%{x|%d %b}<br>%{y} unit<extra></extra>",
+    ))
 
-st.plotly_chart(fig_sales, use_container_width=True)
-
-# TODO: BE - Ganti dengan insight otomatis berdasarkan kemiringan tren asli
-def get_sales_insight(df_trend: pd.DataFrame) -> str:
-    if df_trend.empty:
-        return "Belum ada data yang cukup untuk memberikan insight penjualan."
-    avg_sales = int(df_trend['penjualan'].mean())
-    return f"Penjualan Anda berada di rata-rata {avg_sales} unit per hari selama periode ini."
-
-st.markdown(
-    f"<p style='font-size:0.82rem; color:#729677; margin-top:-0.25rem;'>"
-    f"{get_sales_insight(df_sales)}"
-    f"</p>",
-    unsafe_allow_html=True,
-)
-
-st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
-
-
-# ── C. Chart: Actual vs Forecast ──────────────────────────────────────────────
-st.markdown("<h3>Penjualan Aktual vs Perkiraan (30 Hari Terakhir)</h3>", unsafe_allow_html=True)
-
-df_avf = get_actual_vs_forecast_data()
-
-fig_avf = go.Figure()
-fig_avf.add_trace(go.Scatter(
-    x=df_avf["tanggal"],
-    y=df_avf["aktual"],
-    mode="lines+markers",
-    name="Aktual",
-    line=dict(color="#37633D", width=2.5),
-    marker=dict(size=4, color="#37633D"),
-    hovertemplate="%{x|%d %b}<br>Aktual: %{y} unit<extra></extra>",
-))
-fig_avf.add_trace(go.Scatter(
-    x=df_avf["tanggal"],
-    y=df_avf["forecast"],
-    mode="lines+markers",
-    name="Perkiraan",
-    line=dict(color="#729677", width=2, dash="dot"),
-    marker=dict(size=4, color="#729677"),
-    hovertemplate="%{x|%d %b}<br>Perkiraan: %{y} unit<extra></extra>",
-))
-
-fig_avf.update_layout(
-    plot_bgcolor="#FFFFFF",
-    paper_bgcolor="#FFFFFF",
-    margin=dict(l=0, r=0, t=8, b=0),
-    height=300,
-    xaxis=dict(
-        showgrid=False,
-        tickfont=dict(family="Inter", size=11, color="#729677"),
-        tickformat="%d %b",
-    ),
-    yaxis=dict(
-        showgrid=True,
-        gridcolor="#A9C9AD",
-        tickfont=dict(family="Inter", size=11, color="#729677"),
-        title=None,
-    ),
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1,
-        font=dict(family="Inter", size=11),
-        bgcolor="rgba(0,0,0,0)",
-    ),
-    hoverlabel=dict(font=dict(family="Inter", size=12)),
-)
-
-st.plotly_chart(fig_avf, use_container_width=True)
-
-# TODO: BE - Ganti dengan insight otomatis yang di-generate dari analisis data asli
-def get_avf_insight(df_avf: pd.DataFrame) -> str:
-    if df_avf.empty:
-        return "Belum ada data aktual/forecast yang cukup untuk diperbandingkan."
-    
-    # Dummy logic: Hitung selisih absolut rata-rata
-    diffs = abs(df_avf['aktual'] - df_avf['forecast'])
-    avg_err = (diffs.mean() / df_avf['aktual'].mean() * 100) if df_avf['aktual'].mean() > 0 else 0
-    
-    return (
-        f"Perkiraan kami cukup dekat dengan penjualan nyata (rata-rata deviasi ~{avg_err:.1f}%) "
-        f"— artinya persiapan stok Anda sudah berada di jalur yang benar."
+    fig_sales.update_layout(
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        margin=dict(l=0, r=0, t=8, b=0),
+        height=250,
+        xaxis=dict(
+            showgrid=False,
+            tickfont=dict(family="Inter", size=10, color="#729677"),
+            tickformat="%d %b",
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="#A9C9AD",
+            tickfont=dict(family="Inter", size=10, color="#729677"),
+            title=None,
+        ),
+        legend=dict(font=dict(family="Inter", size=10), bgcolor="rgba(0,0,0,0)"),
+        hoverlabel=dict(font=dict(family="Inter", size=11)),
     )
 
-st.markdown(
-    f"<p style='font-size:0.82rem; color:#64748B; margin-top:-0.25rem;'>"
-    f"{get_avf_insight(df_avf)}"
-    f"</p>",
-    unsafe_allow_html=True,
-)
+    st.plotly_chart(fig_sales, use_container_width=True)
+
+    # TODO: BE - Ganti dengan insight otomatis berdasarkan kemiringan tren asli
+    def get_sales_insight(df_trend: pd.DataFrame) -> str:
+        if df_trend.empty:
+            return "Belum ada data cukup."
+        avg_sales = int(df_trend['penjualan'].mean())
+        return f"Rata-rata {avg_sales} unit/hari dalam 30 hari terakhir."
+
+    st.markdown(
+        f"<p style='font-size:0.75rem; color:#729677; margin-top:-0.5rem; line-height:1.4;'>"
+        f"{get_sales_insight(df_sales)}"
+        f"</p>",
+        unsafe_allow_html=True,
+    )
+
+with col_chart2:
+    st.markdown("<h4 style='font-size:1rem; margin-bottom:0;'>Aktual vs Perkiraan</h4>", unsafe_allow_html=True)
+
+    df_avf = get_actual_vs_forecast_data()
+
+    fig_avf = go.Figure()
+    fig_avf.add_trace(go.Scatter(
+        x=df_avf["tanggal"],
+        y=df_avf["aktual"],
+        mode="lines+markers",
+        name="Aktual",
+        line=dict(color="#37633D", width=2.5),
+        marker=dict(size=4, color="#37633D"),
+        hovertemplate="%{x|%d %b}<br>Aktual: %{y} unit<extra></extra>",
+    ))
+    fig_avf.add_trace(go.Scatter(
+        x=df_avf["tanggal"],
+        y=df_avf["forecast"],
+        mode="lines+markers",
+        name="Perkiraan",
+        line=dict(color="#729677", width=2, dash="dot"),
+        marker=dict(size=4, color="#729677"),
+        hovertemplate="%{x|%d %b}<br>Perkiraan: %{y} unit<extra></extra>",
+    ))
+
+    fig_avf.update_layout(
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
+        margin=dict(l=0, r=0, t=8, b=0),
+        height=250,
+        xaxis=dict(
+            showgrid=False,
+            tickfont=dict(family="Inter", size=10, color="#729677"),
+            tickformat="%d %b",
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor="#A9C9AD",
+            tickfont=dict(family="Inter", size=10, color="#729677"),
+            title=None,
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            font=dict(family="Inter", size=10),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        hoverlabel=dict(font=dict(family="Inter", size=11)),
+    )
+
+    st.plotly_chart(fig_avf, use_container_width=True)
+
+    # TODO: BE - Ganti dengan insight otomatis yang di-generate dari analisis data asli
+    def get_avf_insight(df_avf: pd.DataFrame) -> str:
+        if df_avf.empty:
+            return "Belum ada data cukup."
+        diffs = abs(df_avf['aktual'] - df_avf['forecast'])
+        avg_err = (diffs.mean() / df_avf['aktual'].mean() * 100) if df_avf['aktual'].mean() > 0 else 0
+        return f"Rata-rata deviasi prediksi ~{avg_err:.1f}% dari penjualan nyata."
+
+    st.markdown(
+        f"<p style='font-size:0.75rem; color:#729677; margin-top:-0.5rem; line-height:1.4;'>"
+        f"{get_avf_insight(df_avf)}"
+        f"</p>",
+        unsafe_allow_html=True,
+    )
